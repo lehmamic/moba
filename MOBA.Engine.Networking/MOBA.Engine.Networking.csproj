@@ -1,0 +1,8 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <!--
+      The Riptide implementation will be added in the netcode phase as
+      PackageReference RiptideNetworking.Riptide. For now only abstraction + NullTransport.
+    -->
+
+</Project>

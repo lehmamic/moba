@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <ItemGroup>
+        <PackageReference Include="Silk.NET.Maths" Version="2.23.0" />
+        <PackageReference Include="Silk.NET.Input" Version="2.23.0" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\MOBA.Engine.Core\MOBA.Engine.Core.csproj" />
+        <ProjectReference Include="..\MOBA.Engine.Graphics\MOBA.Engine.Graphics.csproj" />
+        <ProjectReference Include="..\MOBA.Game\MOBA.Game.csproj" />
+    </ItemGroup>
+
+</Project>

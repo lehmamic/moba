@@ -1,0 +1,9 @@
+<Solution>
+  <Project Path="MOBA.Engine.Core/MOBA.Engine.Core.csproj" />
+  <Project Path="MOBA.Engine.Graphics/MOBA.Engine.Graphics.csproj" />
+  <Project Path="MOBA.Engine.Networking/MOBA.Engine.Networking.csproj" />
+  <Project Path="MOBA.Game/MOBA.Game.csproj" />
+  <Project Path="MOBA.Game.Client/MOBA.Game.Client.csproj" />
+  <Project Path="MOBA.Server/MOBA.Server.csproj" />
+  <Project Path="MOBA.Client/MOBA.Client.csproj" />
+</Solution>

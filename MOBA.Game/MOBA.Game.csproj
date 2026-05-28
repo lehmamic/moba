@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <!--
+      MOBA.Game MUST be able to run headless (server build).
+      NO reference to MOBA.Engine.Graphics or any Silk.NET graphics package.
+    -->
+
+    <ItemGroup>
+        <PackageReference Include="Silk.NET.Maths" Version="2.23.0" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\MOBA.Engine.Core\MOBA.Engine.Core.csproj" />
+        <ProjectReference Include="..\MOBA.Engine.Networking\MOBA.Engine.Networking.csproj" />
+    </ItemGroup>
+
+</Project>
