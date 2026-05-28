@@ -39,19 +39,19 @@ window.Load += () =>
     backend = new OpenGLBackend(gl);
     input = window.CreateInput();
 
+    var assetsRoot = Path.Combine(AppContext.BaseDirectory, "assets");
+    var shadersRoot = Path.Combine(assetsRoot, "shaders");
+    var texturesRoot = Path.Combine(assetsRoot, "textures");
+
     shader = backend.CreateShader(
-        ShaderSources.UnlitTexturedVertex,
-        ShaderSources.UnlitTexturedFragment);
+        File.ReadAllText(Path.Combine(shadersRoot, "unlit_textured.vert")),
+        File.ReadAllText(Path.Combine(shadersRoot, "unlit_textured.frag")));
 
-    grassTexture = backend.CreateTexture(
-        ProceduralTextures.CreateGrass(),
-        ProceduralTextures.DefaultSize,
-        ProceduralTextures.DefaultSize);
+    var grass = TextureLoader.LoadRgba(Path.Combine(texturesRoot, "grass.png"));
+    grassTexture = backend.CreateTexture(grass.Pixels, grass.Width, grass.Height);
 
-    checkerTexture = backend.CreateTexture(
-        ProceduralTextures.CreateChecker(),
-        ProceduralTextures.DefaultSize,
-        ProceduralTextures.DefaultSize);
+    var checker = TextureLoader.LoadRgba(Path.Combine(texturesRoot, "dev_checker.png"));
+    checkerTexture = backend.CreateTexture(checker.Pixels, checker.Width, checker.Height);
 
     var map = Map.LeagueSized();
     groundMesh = GroundMesh.CreatePlane(backend, map.Width, map.Length, worldUnitsPerTile: 2f);

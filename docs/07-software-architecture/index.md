@@ -57,7 +57,7 @@ Game code only talks to abstractions: `IGraphicsBackend`, `IMesh`, `ITexture`, `
 - The OpenGL backend lives under `MOBA.Engine.Graphics/OpenGL/`.
 - A Vulkan backend will arrive under `Vulkan/` (or as a sibling assembly if dependencies force it).
 - **Vulkan patch (later):** Y-flip in clip space (negative viewport height or `M22 *= -1` in the projection) + Z-range remap [−1, +1] → [0, +1]. World/view matrices stay RH Y-up.
-- GLSL shaders live under `assets/shaders/`. The same content is also embedded as string constants in `MOBA.Game.Client/ShaderSources.cs` for the first skeleton; hot-reload file loading is a later step.
+- GLSL shaders live under `assets/shaders/` and are loaded from file (`File.ReadAllText`) at startup. Textures live under `assets/textures/` and are loaded via `MOBA.Engine.Graphics.TextureLoader` (StbImageSharp; PNG/JPG/TGA/BMP, RGBA8, vertical flip on load to match OpenGL's bottom-left texture origin). Hot-reload (re-read on file change) is a later step.
 
 See [ADR-003](../14-decision-log/adr-003-graphics-backend-abstraction.md).
 
