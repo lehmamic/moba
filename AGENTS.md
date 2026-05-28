@@ -99,9 +99,8 @@ Use the [Conventional Commits 1.0](https://www.conventionalcommits.org/en/v1.0.0
 | `guidebook` | anything under `docs/` (sections 01–13) |
 | `adr` | anything under `docs/14-decision-log/` |
 | `agents` | `AGENTS.md` itself |
-| `repo` | repo-wide change that does not fit a single scope |
 
-Omit the scope (`<type>: <summary>`) when the change spans many scopes (e.g. a cross-cutting style sweep). Do not invent new scopes — extend this table first.
+Omit the scope (`<type>: <summary>`) when the change spans many scopes or does not fit any single one (e.g. a cross-cutting style sweep, repo-wide build infrastructure). Do not invent new scopes — extend this table first.
 
 **Examples:**
 
