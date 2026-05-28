@@ -14,6 +14,39 @@ namespace MOBA.Architecture.Tests;
 /// </summary>
 public class DependencyTests
 {
+    // ─── MOBA.Utilities — leaf utility library ────────────────────────────────────────
+
+    [Fact]
+    public void Utilities_does_not_depend_on_any_other_MOBA_assembly()
+    {
+        Types().That().ResideInAssembly(UtilitiesAssembly)
+            .Should().NotDependOnAny(
+                Types().That().ResideInAssembly(
+                    EngineCoreAssembly,
+                    EngineGraphicsAssembly,
+                    EngineGraphicsOpenGLAssembly,
+                    EngineNetworkingAssembly,
+                    GameAssembly,
+                    GameClientAssembly,
+                    ServerAssembly,
+                    ClientAssembly))
+            .Because("MOBA.Utilities is a leaf cross-cutting library; nothing else MOBA may bleed in.")
+            .Check(Instance);
+    }
+
+    [Fact]
+    public void Utilities_does_not_depend_on_any_Silk_assembly()
+    {
+        Types().That().ResideInAssembly(UtilitiesAssembly)
+            .Should().NotDependOnAny(
+                Types().That().ResideInAssembly(
+                    SilkOpenGLAssembly,
+                    SilkWindowingAssembly,
+                    SilkInputAssembly))
+            .Because("MOBA.Utilities is plain BCL helpers; no Silk packages.")
+            .Check(Instance);
+    }
+
     // ─── MOBA.Engine.Core — lowest layer, knows nothing else ──────────────────────────
 
     [Fact]

@@ -20,7 +20,10 @@ All eight production projects (plus the architecture-tests project) must build w
 dotnet test
 ```
 
-The only test project today is `tests/MOBA.Architecture.Tests/` (xUnit v3 + ArchUnitNET). It encodes the dependency, naming, and visibility invariants — see [Quality Attributes — Build-time enforcement of invariants](../04-quality-attributes/index.md#build-time-enforcement-of-invariants).
+Test projects under `tests/`:
+
+- `tests/MOBA.Architecture.Tests/` (xUnit v3 + ArchUnitNET) — encodes the dependency, naming, and visibility invariants. See [Quality Attributes — Build-time enforcement of invariants](../04-quality-attributes/index.md#build-time-enforcement-of-invariants).
+- `tests/MOBA.Utilities.Tests/` (xUnit v3) — behavioural tests for `MOBA.Utilities` (`AbsolutePath`, `RelativePath`, `string`-extension operators).
 
 ## Run
 

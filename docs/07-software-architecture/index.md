@@ -10,7 +10,8 @@ Eight production assemblies + one test assembly. Compile-time references encode 
 
 | Project | Responsibility | May reference |
 |---|---|---|
-| `MOBA.Engine.Core` | Game loop, Actor/Component, Time, Scene | Silk.NET.Maths |
+| `MOBA.Utilities` | Cross-cutting BCL helpers (`AbsolutePath`, `RelativePath`, …) | (no external deps) |
+| `MOBA.Engine.Core` | Game loop, Actor/Component, Time, Scene | Utilities, Silk.NET.Maths |
 | `MOBA.Engine.Graphics` | Backend-agnostic abstractions: `IGraphicsBackend`, `IMesh`, `ITexture`, `IShader`, `Material`, `Camera`, `Vertex`, `TextureLoader` | Engine.Core, Silk.NET.Maths, StbImageSharp |
 | `MOBA.Engine.Graphics.OpenGL` | Concrete OpenGL backend (`OpenGLBackend`, `OpenGLMesh`, `OpenGLTexture`, `OpenGLShader`) | Engine.Graphics, Silk.NET.OpenGL, Silk.NET.Maths |
 | `MOBA.Engine.Networking` | `INetTransport`, channels, `NullTransport` | (no external deps; Riptide arrives later) |

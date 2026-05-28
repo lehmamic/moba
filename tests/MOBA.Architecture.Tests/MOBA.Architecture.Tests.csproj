@@ -20,6 +20,7 @@
     <ItemGroup>
         <!-- Every production assembly is referenced so its .dll lands in the test output
              folder and ArchUnit can load it. -->
+        <ProjectReference Include="..\..\MOBA.Utilities\MOBA.Utilities.csproj" />
         <ProjectReference Include="..\..\MOBA.Engine.Core\MOBA.Engine.Core.csproj" />
         <ProjectReference Include="..\..\MOBA.Engine.Graphics\MOBA.Engine.Graphics.csproj" />
         <ProjectReference Include="..\..\MOBA.Engine.Networking\MOBA.Engine.Networking.csproj" />

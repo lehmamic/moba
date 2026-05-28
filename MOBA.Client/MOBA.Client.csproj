@@ -12,6 +12,7 @@
     </ItemGroup>
 
     <ItemGroup>
+        <ProjectReference Include="..\MOBA.Utilities\MOBA.Utilities.csproj" />
         <ProjectReference Include="..\MOBA.Engine.Core\MOBA.Engine.Core.csproj" />
         <ProjectReference Include="..\MOBA.Engine.Graphics\MOBA.Engine.Graphics.csproj" />
         <ProjectReference Include="..\MOBA.Engine.Graphics.OpenGL\MOBA.Engine.Graphics.OpenGL.csproj" />

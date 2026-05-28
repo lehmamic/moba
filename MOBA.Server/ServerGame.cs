@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using MOBA.Engine.Core;
 using MOBA.Game;
+using MOBA.Utilities;
 
 namespace MOBA.Server;
 
@@ -25,7 +26,7 @@ public sealed class ServerGame : GameHost
         assets.AddMapCache();
         AddSystem(assets);
 
-        var mapPath = Path.Combine(AppContext.BaseDirectory, "assets", "maps", "default.json");
+        var mapPath = AbsolutePath.AppBaseDirectory / "assets" / "maps" / "default.json";
         var map = Map.FromDefinition(assets.LoadMap(mapPath));
 
         var world = new MobaWorld(map);

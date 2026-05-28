@@ -87,6 +87,7 @@ Use the [Conventional Commits 1.0](https://www.conventionalcommits.org/en/v1.0.0
 
 | Scope | Covers |
 |---|---|
+| `utilities` | `MOBA.Utilities` |
 | `engine-core` | `MOBA.Engine.Core` |
 | `engine-graphics` | `MOBA.Engine.Graphics` (backend-agnostic abstractions) |
 | `engine-graphics-opengl` | `MOBA.Engine.Graphics.OpenGL` (concrete OpenGL backend) |

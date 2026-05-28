@@ -1,0 +1,9 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <!--
+      Leaf utility project. Cross-cutting helpers used by every other MOBA
+      assembly. Must not reference any other MOBA project — enforced by
+      tests/MOBA.Architecture.Tests/.
+    -->
+
+</Project>

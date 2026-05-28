@@ -1,4 +1,5 @@
 <Solution>
+  <Project Path="MOBA.Utilities/MOBA.Utilities.csproj" />
   <Project Path="MOBA.Engine.Core/MOBA.Engine.Core.csproj" />
   <Project Path="MOBA.Engine.Graphics/MOBA.Engine.Graphics.csproj" />
   <Project Path="MOBA.Engine.Graphics.OpenGL/MOBA.Engine.Graphics.OpenGL.csproj" />
@@ -8,4 +9,5 @@
   <Project Path="MOBA.Server/MOBA.Server.csproj" />
   <Project Path="MOBA.Client/MOBA.Client.csproj" />
   <Project Path="tests/MOBA.Architecture.Tests/MOBA.Architecture.Tests.csproj" />
+  <Project Path="tests/MOBA.Utilities.Tests/MOBA.Utilities.Tests.csproj" />
 </Solution>

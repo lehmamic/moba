@@ -7,6 +7,7 @@ Code-level conventions and the repo layout. The principles behind these conventi
 ## Repo layout
 
 ```
+MOBA.Utilities/               – Cross-cutting BCL helpers (typed paths, …)
 MOBA.Engine.Core/             – Sim infra: Game, Scene, Actor, Component, GameTime
 MOBA.Engine.Graphics/         – Backend-agnostic graphics abstractions + TextureLoader
 MOBA.Engine.Graphics.OpenGL/  – Concrete OpenGL backend (Silk.NET.OpenGL)

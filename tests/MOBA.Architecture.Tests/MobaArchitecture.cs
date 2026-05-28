@@ -11,6 +11,7 @@ namespace MOBA.Architecture.Tests;
 /// </summary>
 public static class MobaArchitecture
 {
+    public static readonly Assembly UtilitiesAssembly = Assembly.Load("MOBA.Utilities");
     public static readonly Assembly EngineCoreAssembly = Assembly.Load("MOBA.Engine.Core");
     public static readonly Assembly EngineGraphicsAssembly = Assembly.Load("MOBA.Engine.Graphics");
     public static readonly Assembly EngineGraphicsOpenGLAssembly = Assembly.Load("MOBA.Engine.Graphics.OpenGL");
@@ -28,6 +29,7 @@ public static class MobaArchitecture
 
     public static readonly ArchUnitNET.Domain.Architecture Instance = new ArchLoader()
         .LoadAssemblies(
+            UtilitiesAssembly,
             EngineCoreAssembly,
             EngineGraphicsAssembly,
             EngineGraphicsOpenGLAssembly,

@@ -3,6 +3,7 @@ using MOBA.Engine.Graphics;
 using MOBA.Engine.Graphics.OpenGL;
 using MOBA.Game;
 using MOBA.Game.Client;
+using MOBA.Utilities;
 using Silk.NET.Input;
 using Silk.NET.Maths;
 using Silk.NET.OpenGL;
@@ -75,18 +76,18 @@ public sealed class ClientGame : GameHost
         AddSystem(_cameraSwitcher);
         Initialize();
 
-        var assetsRoot = Path.Combine(AppContext.BaseDirectory, "assets");
-        var shadersRoot = Path.Combine(assetsRoot, "shaders");
-        var texturesRoot = Path.Combine(assetsRoot, "textures");
-        var mapsRoot = Path.Combine(assetsRoot, "maps");
+        var assetsRoot = AbsolutePath.AppBaseDirectory / "assets";
+        var shadersRoot = assetsRoot / "shaders";
+        var texturesRoot = assetsRoot / "textures";
+        var mapsRoot = assetsRoot / "maps";
 
         var shader = _assets.LoadShader(
-            Path.Combine(shadersRoot, "unlit_textured.vert"),
-            Path.Combine(shadersRoot, "unlit_textured.frag"));
-        var groundMaterial = new Material(shader, _assets.LoadTexture(Path.Combine(texturesRoot, "grass.png")));
-        var cubeMaterial = new Material(shader, _assets.LoadTexture(Path.Combine(texturesRoot, "dev_checker.png")));
+            shadersRoot / "unlit_textured.vert",
+            shadersRoot / "unlit_textured.frag");
+        var groundMaterial = new Material(shader, _assets.LoadTexture(texturesRoot / "grass.png"));
+        var cubeMaterial = new Material(shader, _assets.LoadTexture(texturesRoot / "dev_checker.png"));
 
-        var map = Map.FromDefinition(_assets.LoadMap(Path.Combine(mapsRoot, "default.json")));
+        var map = Map.FromDefinition(_assets.LoadMap(mapsRoot / "default.json"));
         var groundMesh = _assets.LoadGroundMesh(map.Width, map.Length, worldUnitsPerTile: 2f);
         var cubeMesh = _assets.LoadCubeMesh();
 
