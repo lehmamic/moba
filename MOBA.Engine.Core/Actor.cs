@@ -1,23 +1,12 @@
-using Silk.NET.Maths;
-
 namespace MOBA.Engine.Core;
 
 public class Actor
 {
     private readonly List<Component> _components = [];
 
-    public Vector3D<float> Position { get; set; } = Vector3D<float>.Zero;
-
-    public Quaternion<float> Rotation { get; set; } = Quaternion<float>.Identity;
-
-    public Vector3D<float> Scale { get; set; } = Vector3D<float>.One;
+    public Transform Transform { get; } = new();
 
     public IReadOnlyList<Component> Components => _components;
-
-    public Matrix4X4<float> WorldMatrix =>
-        Matrix4X4.CreateScale(Scale)
-        * Matrix4X4.CreateFromQuaternion(Rotation)
-        * Matrix4X4.CreateTranslation(Position);
 
     internal void AttachComponent(Component component) => _components.Add(component);
 

@@ -9,8 +9,8 @@ public sealed class TestCubeActor : Actor
     {
         // Unit cube (extent ±0.5) scaled by 2; placed at Y=1 so its bottom edge sits exactly
         // on Y=0 (on the ground plane).
-        Position = new Vector3D<float>(0f, 1f, 0f);
-        Scale = new Vector3D<float>(2f, 2f, 2f);
+        Transform.Position = new Vector3D<float>(0f, 1f, 0f);
+        Transform.Scale = new Vector3D<float>(2f, 2f, 2f);
         _ = new TransformComponent(this);
     }
 }

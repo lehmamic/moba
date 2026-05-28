@@ -27,7 +27,7 @@ public sealed class Renderer
             {
                 if (component is IRenderable renderable)
                 {
-                    _backend.DrawMesh(renderable.Mesh, renderable.Material, actor.WorldMatrix * viewProjection);
+                    _backend.DrawMesh(renderable.Mesh, renderable.Material, actor.Transform.World * viewProjection);
                 }
             }
         }
