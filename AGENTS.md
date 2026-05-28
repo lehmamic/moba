@@ -41,7 +41,7 @@ ADRs are the immutable source of truth for any architectural decision. The earli
 
 ## 4. When changing things
 
-- **Code change that fits an existing principle / decision:** just make the change. The compiler + `.editorconfig` + `Directory.Build.props` will keep style and dependency invariants honest.
-- **Code change that touches a principle or invariant:** read the linked ADR first. If the change deviates, you need a new ADR (see [Decision Log — Adding an ADR](docs/14-decision-log/index.md#adding-an-adr)) that supersedes the old one. Do not silently change a load-bearing rule.
+- **Code change that fits an existing principle / decision:** just make the change. The compiler + `.editorconfig` + `Directory.Build.props` will keep style and dependency invariants honest. ArchUnitNET tests in `tests/MOBA.Architecture.Tests/` catch dependency / naming / visibility violations at `dotnet test` time — run them locally before committing a non-trivial change.
+- **Code change that touches a principle or invariant:** read the linked ADR first. If the change deviates, you need a new ADR (see [Decision Log — Adding an ADR](docs/14-decision-log/index.md#adding-an-adr)) that supersedes the old one. Do not silently change a load-bearing rule. If the new rule needs a new architecture test, add it next to the existing ones.
 - **Architectural change** (a new library, a new abstraction, a new project boundary): write a new ADR, update the affected guidebook section(s), then implement.
 - **When the idiomatic path is not obvious:** ask, do not guess. See [Principles — Idiomatic .NET / C# style](docs/06-principles/index.md#2-idiomatic-net--c-style).

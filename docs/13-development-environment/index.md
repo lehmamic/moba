@@ -12,7 +12,15 @@
 dotnet build dotnet-moba.slnx
 ```
 
-All seven projects must build with **zero warnings**. `TreatWarningsAsErrors=true` + `EnforceCodeStyleInBuild=true` (see [Code](../08-code/index.md)) means style violations also break the build.
+All seven production projects (plus the architecture-tests project) must build with **zero warnings**. `TreatWarningsAsErrors=true` + `EnforceCodeStyleInBuild=true` (see [Code](../08-code/index.md)) means style violations also break the build.
+
+## Test
+
+```sh
+dotnet test
+```
+
+The only test project today is `tests/MOBA.Architecture.Tests/` (xUnit v3 + ArchUnitNET). It encodes the dependency, naming, and visibility invariants — see [Quality Attributes — Build-time enforcement of invariants](../04-quality-attributes/index.md#build-time-enforcement-of-invariants).
 
 ## Run
 

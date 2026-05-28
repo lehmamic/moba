@@ -1,0 +1,32 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <OutputType>Exe</OutputType>
+        <IsPackable>false</IsPackable>
+        <IsTestProject>true</IsTestProject>
+        <!-- Test projects often add reflection-driven types; CA1812 (uninstantiated internals)
+             is not interesting here. -->
+        <NoWarn>$(NoWarn);CA1812</NoWarn>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Microsoft.NET.Test.Sdk" />
+        <PackageReference Include="xunit.v3" />
+        <PackageReference Include="xunit.runner.visualstudio" />
+        <PackageReference Include="TngTech.ArchUnitNET" />
+        <PackageReference Include="TngTech.ArchUnitNET.xUnitV3" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <!-- Every production assembly is referenced so its .dll lands in the test output
+             folder and ArchUnit can load it. -->
+        <ProjectReference Include="..\..\MOBA.Engine.Core\MOBA.Engine.Core.csproj" />
+        <ProjectReference Include="..\..\MOBA.Engine.Graphics\MOBA.Engine.Graphics.csproj" />
+        <ProjectReference Include="..\..\MOBA.Engine.Networking\MOBA.Engine.Networking.csproj" />
+        <ProjectReference Include="..\..\MOBA.Game\MOBA.Game.csproj" />
+        <ProjectReference Include="..\..\MOBA.Game.Client\MOBA.Game.Client.csproj" />
+        <ProjectReference Include="..\..\MOBA.Server\MOBA.Server.csproj" />
+        <ProjectReference Include="..\..\MOBA.Client\MOBA.Client.csproj" />
+    </ItemGroup>
+
+</Project>

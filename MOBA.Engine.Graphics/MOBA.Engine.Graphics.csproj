@@ -6,9 +6,9 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="Silk.NET.Maths" Version="2.23.0" />
-        <PackageReference Include="Silk.NET.OpenGL" Version="2.23.0" />
-        <PackageReference Include="StbImageSharp" Version="2.30.15" />
+        <PackageReference Include="Silk.NET.Maths" />
+        <PackageReference Include="Silk.NET.OpenGL" />
+        <PackageReference Include="StbImageSharp" />
     </ItemGroup>
 
     <ItemGroup>

@@ -21,6 +21,14 @@ Both graphics and networking are accessed only through engine-internal abstracti
 
 Dependency invariants between projects (Game does not see Graphics; Server does not see Windowing/OpenGL/Input) are compiler-enforced via the [7-project layout](../07-software-architecture/index.md). Code-style invariants (file-scoped namespaces, naming, nullable annotations) are build-time enforced via `EnforceCodeStyleInBuild=true` + `TreatWarningsAsErrors=true` in `Directory.Build.props`. A violation does not compile.
 
+Beyond what the compiler can catch, `tests/MOBA.Architecture.Tests/` uses [ArchUnitNET](https://github.com/TNG/ArchUnitNET) over xUnit v3 to assert:
+
+- type-level dependency invariants (sim assemblies never reach into graphics; the server entry point pulls no Silk graphics/windowing/input packages);
+- naming conventions (`I`-prefix on interfaces, `Component` suffix on sim components, `RendererComponent` / `VisualComponent` suffix on render-side components);
+- visibility (OpenGL resource wrappers must not leak as part of the public API — only `OpenGLBackend` is public).
+
+Run them with `dotnet test`. A failing test points at a load-bearing rule that has been broken.
+
 - Rationale: [ADR-005](../14-decision-log/adr-005-project-structure.md), [ADR-007](../14-decision-log/adr-007-dotnet-idiomatic-style.md).
 
 ## What is explicitly **not** a quality attribute
