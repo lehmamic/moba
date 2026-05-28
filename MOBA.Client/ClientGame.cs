@@ -19,7 +19,6 @@ namespace MOBA.Client;
 public sealed class ClientGame : GameHost
 {
     private readonly IWindow _window;
-    private readonly List<IMesh> _meshes = [];
 
     private OpenGLBackend? _backend;
     private InputSystem? _input;
@@ -56,8 +55,17 @@ public sealed class ClientGame : GameHost
         _backend = new OpenGLBackend(gl);
 
         _input = new InputSystem(_window.CreateInput());
-        _assets = new AssetManager(_backend);
         _renderer = new Renderer(_backend);
+
+        // Single AssetManager for every asset type the client needs. The typed
+        // caches come from extension methods that live with the matching project:
+        // graphics caches in MOBA.Engine.Graphics, map cache in MOBA.Game, mesh
+        // caches in MOBA.Game.Client. AssetManager itself stays free of deps.
+        _assets = new AssetManager();
+        _assets.AddShaderCache(_backend);
+        _assets.AddTextureCache(_backend);
+        _assets.AddMeshCache(_backend);
+        _assets.AddMapCache();
 
         var aspectRatio = (float)_window.FramebufferSize.X / _window.FramebufferSize.Y;
         _cameraSwitcher = new CameraSwitcher(_input.Context, aspectRatio);
@@ -70,6 +78,7 @@ public sealed class ClientGame : GameHost
         var assetsRoot = Path.Combine(AppContext.BaseDirectory, "assets");
         var shadersRoot = Path.Combine(assetsRoot, "shaders");
         var texturesRoot = Path.Combine(assetsRoot, "textures");
+        var mapsRoot = Path.Combine(assetsRoot, "maps");
 
         var shader = _assets.LoadShader(
             Path.Combine(shadersRoot, "unlit_textured.vert"),
@@ -77,11 +86,9 @@ public sealed class ClientGame : GameHost
         var groundMaterial = new Material(shader, _assets.LoadTexture(Path.Combine(texturesRoot, "grass.png")));
         var cubeMaterial = new Material(shader, _assets.LoadTexture(Path.Combine(texturesRoot, "dev_checker.png")));
 
-        var map = Map.LeagueSized();
-        var groundMesh = GroundMesh.CreatePlane(_backend, map.Width, map.Length, worldUnitsPerTile: 2f);
-        var cubeMesh = CubeMesh.CreateUnitCube(_backend);
-        _meshes.Add(groundMesh);
-        _meshes.Add(cubeMesh);
+        var map = Map.FromDefinition(_assets.LoadMap(Path.Combine(mapsRoot, "default.json")));
+        var groundMesh = _assets.LoadGroundMesh(map.Width, map.Length, worldUnitsPerTile: 2f);
+        var cubeMesh = _assets.LoadCubeMesh();
 
         var world = new MobaWorld(map);
         world.Populate(Game.Scene);
@@ -126,7 +133,9 @@ public sealed class ClientGame : GameHost
 
     private void OnClosing()
     {
-        DisposeMeshes();
+        // AssetManager (registered as a system) disposes every cached GPU resource
+        // — shaders, textures, meshes — in Shutdown's LIFO walk. We only need to
+        // dispose the backend itself here.
         Shutdown();
         _backend?.Dispose();
         Console.WriteLine("[MOBA.Client] Shutdown.");
@@ -134,18 +143,8 @@ public sealed class ClientGame : GameHost
 
     public override void Dispose()
     {
-        DisposeMeshes();
         base.Dispose();
         _backend?.Dispose();
         _window.Dispose();
-    }
-
-    private void DisposeMeshes()
-    {
-        foreach (var mesh in _meshes)
-        {
-            mesh.Dispose();
-        }
-        _meshes.Clear();
     }
 }

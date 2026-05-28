@@ -16,7 +16,7 @@ MOBA.Game.Client/          – Render components, camera controllers, mesh/textu
 MOBA.Server/               – Headless entry point
 MOBA.Client/               – Window + GL + game loop
 tests/MOBA.Architecture.Tests/  – ArchUnitNET + xUnit v3, enforces dependency / naming / visibility invariants
-assets/                    – shaders/, textures/ (copied into MOBA.Client output)
+assets/                    – shaders/ + textures/ (client only), maps/ (client + server)
 docs/                      – Software Guidebook (this folder), 14-decision-log/ holds ADRs
 .editorconfig              – style + naming + analyzer severities
 Directory.Build.props      – TargetFramework=net10.0, Nullable, WarningsAsErrors

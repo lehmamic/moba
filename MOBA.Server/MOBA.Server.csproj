@@ -15,4 +15,15 @@
         <ProjectReference Include="..\MOBA.Game\MOBA.Game.csproj" />
     </ItemGroup>
 
+    <ItemGroup>
+        <!--
+          Server only needs data assets (maps, ability definitions, …); textures and
+          shaders stay in the client's output dir.
+        -->
+        <None Include="..\assets\maps\**\*.*">
+            <Link>assets\maps\%(RecursiveDir)%(Filename)%(Extension)</Link>
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </None>
+    </ItemGroup>
+
 </Project>

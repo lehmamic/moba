@@ -72,7 +72,7 @@ Both entry points share an abstract `GameHost` in `MOBA.Engine.Core`. It owns th
 - `IEngineSystem` (in `MOBA.Engine.Core`) — `OnInitialize` / `OnUpdate(GameTime)` / `OnShutdown` plus `IDisposable`.
 - `GameHost.Initialize()` runs `OnInitialize` on each system in registration order; `Update(dt)` runs `OnUpdate` on each system then `Game.Update(dt)`; `Shutdown()` runs `OnShutdown` in **LIFO** order and is idempotent. `Run()` is *not* on the base — the cadence differs.
 - **`ClientGame : GameHost`** (in `MOBA.Client`) — owns the Silk.NET `IWindow` and the OpenGL backend. `Run()` delegates to `_window.Run()`; window callbacks route into the base lifecycle. Hosts these systems: `InputSystem`, `AssetManager`, `CameraSwitcher`. The `Renderer` is invoked from the window's render callback (not as a system, because per-frame ≠ per-tick).
-- **`ServerGame : GameHost`** (in `MOBA.Server`) — owns the fixed-step loop. `Run()` calls `Initialize()`, loops `Update(TickInterval)` with a sleep, and calls `Shutdown()` on Ctrl-C. Hosts no systems yet (Networking arrives in a later phase).
+- **`ServerGame : GameHost`** (in `MOBA.Server`) — owns the fixed-step loop. `Run()` calls `Initialize()`, loops `Update(TickInterval)` with a sleep, and calls `Shutdown()` on Ctrl-C. Hosts an `AssetCache<string, MapDefinition>` system for data assets; future Networking + NavMesh systems land beside it.
 
 Each `Program.cs` is intentionally a two-liner:
 
@@ -84,6 +84,20 @@ game.Run();
 **Multi-match scaling** is out-of-process: one server process hosts one match; multi-match means multiple processes. See [ADR-010](../14-decision-log/adr-010-one-match-per-process.md).
 
 Component-side: `MeshRendererComponent` (in `MOBA.Game.Client`) implements `IRenderable` (in `MOBA.Engine.Graphics`). The `Renderer` discovers what to draw by walking `Scene.Actors` and picking components that implement `IRenderable`, so it never sees client-side types.
+
+### Asset caching
+
+Both server and client use the **same** `AssetManager` (in `MOBA.Engine.Core`) — a hub that owns a list of typed `AssetCache<TKey, TAsset>` instances and propagates the host lifecycle to each. `AssetManager` itself stays free of graphics or game dependencies.
+
+The typed caches and convenience load methods come from extension methods that live with the matching layer:
+
+- `MOBA.Engine.Graphics.AssetManagerExtensions` — `AddShaderCache(backend)` + `LoadShader(vert, frag)`, `AddTextureCache(backend)` + `LoadTexture(path)`. Used by the client only.
+- `MOBA.Game.AssetManagerExtensions` — `AddMapCache()` + `LoadMap(path)` (System.Text.Json over `MapDefinition`). Used by **both** server and client.
+- `MOBA.Game.Client.AssetManagerExtensions` — `AddMeshCache(backend)` + `LoadCubeMesh()` / `LoadGroundMesh(w, l, t)`. One `AssetCache<string, IMesh>` covers every procedural mesh; the construction parameters are flattened into the key string (`cube`, `ground/150/150/2`, …). New mesh types extend the same key scheme. Disposal flows through the host lifecycle, replacing the ad-hoc mesh tracking list.
+
+`AssetCache<TKey, TAsset>` is the underlying primitive (lazy load, cache by key, dispose any `IDisposable` entries on shutdown). Future asset types (ability tables, champion stats, navmesh blobs) ship as new extension methods that add the cache and expose a typed `Load*` helper — no changes to `AssetManager` itself.
+
+Both server and client load the map dimensions from `assets/maps/default.json` through this pattern, then call `Map.FromDefinition(...)` to build the runtime `Map`. The server's `.csproj` only copies `assets/maps/**` to its output; shaders and textures stay in the client's bin.
 
 See [ADR-009](../14-decision-log/adr-009-gamehost-shared-abstraction.md) for the GameHost rationale.
 

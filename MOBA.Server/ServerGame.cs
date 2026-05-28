@@ -17,8 +17,18 @@ public sealed class ServerGame : GameHost
 
     public ServerGame()
     {
-        // No client-bound systems yet — Networking arrives in a later phase.
-        var world = new MobaWorld(Map.LeagueSized());
+        // Single AssetManager for every server-side asset type. AddMapCache lives in
+        // MOBA.Game as an extension method so both server and client deserialise the
+        // same JSON the same way. Future data caches (ability tables, champion
+        // stats, navmesh blobs) plug in beside it.
+        var assets = new AssetManager();
+        assets.AddMapCache();
+        AddSystem(assets);
+
+        var mapPath = Path.Combine(AppContext.BaseDirectory, "assets", "maps", "default.json");
+        var map = Map.FromDefinition(assets.LoadMap(mapPath));
+
+        var world = new MobaWorld(map);
         world.Populate(Game.Scene);
     }
 
