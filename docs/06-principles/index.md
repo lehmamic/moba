@@ -62,9 +62,9 @@ See [ADR-004](../14-decision-log/adr-004-server-authoritative.md) and [ADR-005](
 **Component naming convention:**
 
 - **Sim components** in `MOBA.Game` use the suffix `Component` (`TransformComponent`, `MoveComponent`, `HealthComponent`).
-- **Render components** in `MOBA.Game.Client` use the suffix `RendererComponent` / `VisualComponent` (`MeshRendererComponent`).
+- **Client-only components** in `MOBA.Game.Client` use a distinguishing suffix that makes the concern obvious at the call site: `RendererComponent` / `VisualComponent` for render-side (`MeshRendererComponent`), `InputComponent` for local-player input (`LocalCubeInputComponent`).
 
-Sim components live on server + client (replicated truth). Render components live only on the client (they react to replicated state).
+Sim components live on server + client (replicated truth). Client-only components live only on the client — render components react to replicated state, input components turn local input into server-bound commands.
 
 **Server-authoritative invariants:**
 

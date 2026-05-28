@@ -1,6 +1,7 @@
 using MOBA.Engine.Core;
 using MOBA.Engine.Graphics;
 using MOBA.Engine.Graphics.OpenGL;
+using MOBA.Engine.Networking.Riptide;
 using MOBA.Game;
 using MOBA.Game.Client;
 using MOBA.Utilities;
@@ -14,8 +15,9 @@ namespace MOBA.Client;
 /// <summary>
 /// Client-side <see cref="GameHost"/>. Owns the Silk.NET window, the OpenGL backend,
 /// the per-session systems (<see cref="InputSystem"/>, <see cref="AssetManager"/>,
-/// <see cref="CameraSwitcher"/>), and the <see cref="Renderer"/>. Wires window
-/// callbacks to the base host lifecycle.
+/// <see cref="CameraSwitcher"/>, transport, sync, click-input), and the
+/// <see cref="Renderer"/>. Connects to the server on Load; click-to-move flows
+/// over the Riptide transport.
 /// </summary>
 public sealed class ClientGame : GameHost
 {
@@ -32,7 +34,7 @@ public sealed class ClientGame : GameHost
         var options = WindowOptions.Default with
         {
             Size = new Vector2D<int>(1280, 720),
-            Title = "MOBA Skeleton — RH Y-up, OpenGL (F1: camera toggle, RMB+drag: look, WASD/QE: move)",
+            Title = "MOBA Skeleton — RH Y-up, OpenGL (F1: camera toggle, RMB+drag: look, LMB: move cube, WASD/QE: free-fly)",
             VSync = true,
             API = new GraphicsAPI(
                 ContextAPI.OpenGL,
@@ -58,10 +60,6 @@ public sealed class ClientGame : GameHost
         _input = new InputSystem(_window.CreateInput());
         _renderer = new Renderer(_backend);
 
-        // Single AssetManager for every asset type the client needs. The typed
-        // caches come from extension methods that live with the matching project:
-        // graphics caches in MOBA.Engine.Graphics, map cache in MOBA.Game, mesh
-        // caches in MOBA.Game.Client. AssetManager itself stays free of deps.
         _assets = new AssetManager();
         _assets.AddShaderCache(_backend);
         _assets.AddTextureCache(_backend);
@@ -70,11 +68,6 @@ public sealed class ClientGame : GameHost
 
         var aspectRatio = (float)_window.FramebufferSize.X / _window.FramebufferSize.Y;
         _cameraSwitcher = new CameraSwitcher(_input.Context, aspectRatio);
-
-        AddSystem(_input);
-        AddSystem(_assets);
-        AddSystem(_cameraSwitcher);
-        Initialize();
 
         var assetsRoot = AbsolutePath.AppBaseDirectory / "assets";
         var shadersRoot = assetsRoot / "shaders";
@@ -86,6 +79,7 @@ public sealed class ClientGame : GameHost
             shadersRoot / "unlit_textured.frag");
         var groundMaterial = new Material(shader, _assets.LoadTexture(texturesRoot / "grass.png"));
         var cubeMaterial = new Material(shader, _assets.LoadTexture(texturesRoot / "dev_checker.png"));
+        var markerMaterial = new Material(shader, _assets.LoadTexture(texturesRoot / "marker_magenta.png"));
 
         var map = Map.FromDefinition(_assets.LoadMap(mapsRoot / "default.json"));
         var groundMesh = _assets.LoadGroundMesh(map.Width, map.Length, worldUnitsPerTile: 2f);
@@ -94,6 +88,12 @@ public sealed class ClientGame : GameHost
         var world = new MobaWorld(map);
         world.Populate(Game.Scene);
 
+        // Build the local network sync system; we'll register the pre-spawned cube
+        // below so the server's position updates land on the right actor.
+        var transport = new RiptideClientTransport();
+        var syncSystem = new NetworkSyncSystem(Game.Scene, transport, _assets, markerMaterial);
+
+        TestCubeActor? cubeActor = null;
         foreach (var actor in Game.Scene.Actors)
         {
             switch (actor)
@@ -101,15 +101,34 @@ public sealed class ClientGame : GameHost
                 case GroundPlaneActor:
                     _ = new MeshRendererComponent(actor, groundMesh, groundMaterial);
                     break;
-                case TestCubeActor:
-                    _ = new MeshRendererComponent(actor, cubeMesh, cubeMaterial);
+                case TestCubeActor cube:
+                    _ = new MeshRendererComponent(cube, cubeMesh, cubeMaterial);
+                    _ = new NetworkIdentityComponent(cube, 2);
+                    _ = new LocalCubeInputComponent(cube, _cameraSwitcher, transport);
+                    cubeActor = cube;
                     break;
             }
         }
+        if (cubeActor is not null)
+        {
+            syncSystem.Register(2, cubeActor);
+        }
+
+        // Order matters: transport before sync so MessageReceived events fire
+        // after polling, sync before camera so any spawn from the server is
+        // applied before render. The click-to-move handler lives on the cube
+        // actor (LocalCubeInputComponent) and runs via ProcessInput, not as a
+        // system.
+        AddSystem(_input);
+        AddSystem(_assets);
+        AddSystem(transport);
+        AddSystem(syncSystem);
+        AddSystem(_cameraSwitcher);
+        Initialize();
 
         _backend.Resize(_window.FramebufferSize.X, _window.FramebufferSize.Y);
 
-        Console.WriteLine("[MOBA.Client] Loaded. F1 = camera toggle, RMB+drag = look, WASD/QE = move.");
+        Console.WriteLine("[MOBA.Client] Loaded. LMB = move cube, F1 = camera toggle, RMB+drag = look, WASD/QE = free-fly.");
     }
 
     private void OnFramebufferResize(Vector2D<int> size)
@@ -121,7 +140,14 @@ public sealed class ClientGame : GameHost
         }
     }
 
-    private void OnUpdate(double deltaSeconds) => Update((float)deltaSeconds);
+    private void OnUpdate(double deltaSeconds)
+    {
+        if (_input is not null)
+        {
+            ProcessInput(_input.CaptureSnapshot(_window.FramebufferSize));
+        }
+        Update((float)deltaSeconds);
+    }
 
     private void OnRender(double deltaSeconds)
     {
@@ -134,9 +160,6 @@ public sealed class ClientGame : GameHost
 
     private void OnClosing()
     {
-        // AssetManager (registered as a system) disposes every cached GPU resource
-        // — shaders, textures, meshes — in Shutdown's LIFO walk. We only need to
-        // dispose the backend itself here.
         Shutdown();
         _backend?.Dispose();
         Console.WriteLine("[MOBA.Client] Shutdown.");

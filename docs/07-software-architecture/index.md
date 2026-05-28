@@ -74,7 +74,7 @@ Both entry points share an abstract `GameHost` in `MOBA.Engine.Core`. It owns th
 - `IEngineSystem` (in `MOBA.Engine.Core`) — `OnInitialize` / `OnUpdate(GameTime)` / `OnShutdown` plus `IDisposable`.
 - `GameHost.Initialize()` runs `OnInitialize` on each system in registration order; `Update(dt)` runs `OnUpdate` on each system then `Game.Update(dt)`; `Shutdown()` runs `OnShutdown` in **LIFO** order and is idempotent. `Run()` is *not* on the base — the cadence differs.
 - **`ClientGame : GameHost`** (in `MOBA.Client`) — owns the Silk.NET `IWindow` and the OpenGL backend. `Run()` delegates to `_window.Run()`; window callbacks route into the base lifecycle. Hosts these systems: `InputSystem`, `AssetManager`, `CameraSwitcher`. The `Renderer` is invoked from the window's render callback (not as a system, because per-frame ≠ per-tick).
-- **`ServerGame : GameHost`** (in `MOBA.Server`) — owns the fixed-step loop. `Run()` calls `Initialize()`, loops `Update(TickInterval)` with a sleep, and calls `Shutdown()` on Ctrl-C. Hosts an `AssetCache<string, MapDefinition>` system for data assets; future Networking + NavMesh systems land beside it.
+- **`ServerGame : GameHost`** (in `MOBA.Server`) — owns the fixed-step loop. `Run()` calls `Initialize()`, loops `Update(TickInterval)` with a sleep, and calls `Shutdown()` on Ctrl-C. Hosts an `AssetManager` for data assets, a `RiptideServerTransport` for inbound `MoveCommand` messages + outbound state broadcasts, and a `MovementSystem` that advances actors with a `MoveTargetComponent` toward their target at constant speed.
 
 Each `Program.cs` is intentionally a two-liner:
 
@@ -86,6 +86,45 @@ game.Run();
 **Multi-match scaling** is out-of-process: one server process hosts one match; multi-match means multiple processes. See [ADR-010](../14-decision-log/adr-010-one-match-per-process.md).
 
 Component-side: `MeshRendererComponent` (in `MOBA.Game.Client`) implements `IRenderable` (in `MOBA.Engine.Graphics`). The `Renderer` discovers what to draw by walking `Scene.Actors` and picking components that implement `IRenderable`, so it never sees client-side types.
+
+### Click-to-move flow (skeleton example)
+
+The first end-to-end use of the server-authoritative architecture:
+
+```
+ClickInputSystem (client)
+   └── LMB rising edge → MousePicker.PickGround (camera + framebuffer) → world target
+       └── INetTransport.Send(Reliable, MoveCommandMessage)
+                                    │
+                                    ▼ (UDP)
+                              RiptideClientTransport ─→ RiptideServerTransport
+                                                                │
+                                                                ▼
+                                                   MovementSystem.OnMessageReceived
+                                                                │
+                                                                ▼
+                                                   MoveTargetComponent.Target = …
+                                                   spawn MarkerActor + AddActor(Scene)
+                                                   Send(Reliable, ActorSpawnMessage)
+                                                                │
+                                                                ▼ (server tick)
+                                                   actor.Transform.Position += step
+                                                   Send(Unreliable, ActorPositionUpdateMessage)
+                                                                │
+                                                                ▼ (on arrival)
+                                                   despawn marker
+                                                   Send(Reliable, ActorDespawnMessage)
+                                                                │
+                                                                ▼ (UDP)
+                                                         NetworkSyncSystem (client)
+                                                                │
+                                                                ▼
+                                                   uint → Actor map →
+                                                   Transform.Position update,
+                                                   MarkerActor spawn / despawn
+```
+
+`NetworkIdentityComponent` in `MOBA.Game` carries the `uint` shared between server and client. Pre-spawned actors use hardcoded IDs (`2 = cube`); server-spawned markers start at 100.
 
 ### Asset caching
 

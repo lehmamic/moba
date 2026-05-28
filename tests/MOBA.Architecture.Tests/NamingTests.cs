@@ -38,16 +38,19 @@ public class NamingTests
     }
 
     [Fact]
-    public void Render_components_in_MOBA_Game_Client_end_with_RendererComponent_or_VisualComponent()
+    public void Client_only_components_in_MOBA_Game_Client_use_a_distinguishing_suffix()
     {
-        // Render components live only in Game.Client and have a distinctive suffix that
-        // makes it obvious at the call site whether code is client-only.
+        // Client-only components live only in Game.Client and have a distinctive suffix
+        // that makes the concern obvious at the call site:
+        //   RendererComponent / VisualComponent — render-side
+        //   InputComponent                       — local-player input → server-bound commands
         Classes().That().ResideInAssembly(GameClientAssembly)
             .And().AreAssignableTo(typeof(Component))
             .And().AreNotAbstract()
             .Should().HaveNameEndingWith("RendererComponent")
             .OrShould().HaveNameEndingWith("VisualComponent")
-            .Because("ADR-005 + AGENTS.md: render-side components are RendererComponent / VisualComponent suffixed.")
+            .OrShould().HaveNameEndingWith("InputComponent")
+            .Because("docs/06-principles + AGENTS.md: client-only components are suffixed by concern (RendererComponent / VisualComponent for render, InputComponent for local input).")
             .Check(Instance);
     }
 }

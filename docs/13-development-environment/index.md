@@ -12,7 +12,7 @@
 dotnet build dotnet-moba.slnx
 ```
 
-All eight production projects (plus the architecture-tests project) must build with **zero warnings**. `TreatWarningsAsErrors=true` + `EnforceCodeStyleInBuild=true` (see [Code](../08-code/index.md)) means style violations also break the build.
+All nine production projects (plus the test projects) must build with **zero warnings**. `TreatWarningsAsErrors=true` + `EnforceCodeStyleInBuild=true` (see [Code](../08-code/index.md)) means style violations also break the build.
 
 ## Test
 
@@ -27,17 +27,35 @@ Test projects under `tests/`:
 
 ## Run
 
-**Headless server** (no window, ticks at 30 Hz, Ctrl-C to stop):
+The client connects to the server over UDP on `127.0.0.1:7777`, so the server must be started first.
+
+**Terminal 1** — start the server (no window, ticks at 30 Hz, Ctrl-C to stop):
 
 ```sh
 dotnet run --project MOBA.Server
 ```
 
-**Client** (opens a window, renders the skeleton scene):
+Expected output:
+
+```
+[MOBA.Server] match starting @ 30 Hz
+[MOBA.Server] listening on UDP 7777
+```
+
+**Terminal 2** — start the client (opens a window, dials the server):
 
 ```sh
 dotnet run --project MOBA.Client
 ```
+
+Expected output:
+
+```
+[MOBA.Client] connected to 127.0.0.1:7777
+[MOBA.Client] Loaded. LMB = move cube, F1 = camera toggle, …
+```
+
+The server logs `client <id> connected` once the client handshake completes. Left-clicking on the ground sends a `MoveCommand` to the server; the cube starts moving and a magenta marker appears at the click point. When the cube arrives, the marker disappears. Clicking again before arrival redirects the cube.
 
 Both `Program.cs` files are intentionally two-liners — all behaviour lives in `ClientGame` / `ServerGame` (see [Software Architecture — Hosting & system lifecycle](../07-software-architecture/index.md#hosting--system-lifecycle)).
 
@@ -49,6 +67,7 @@ One server process hosts exactly one match ([ADR-010](../14-decision-log/adr-010
 
 | Key | Action |
 |---|---|
+| Left mouse | Send `MoveCommand` to server: cube heads to the click point, marker sphere appears there until arrival |
 | W/A/S/D | Move free-fly camera along camera forward/right |
 | Q/E | Move free-fly camera down/up along world +Y |
 | Right mouse + drag | Mouse-look (yaw + pitch) |

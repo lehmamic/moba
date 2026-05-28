@@ -12,6 +12,13 @@ public abstract class Component
 
     public virtual void OnBegin() { }
 
+    /// <summary>
+    /// Optional input hook called once per frame, before <see cref="OnUpdate"/>,
+    /// with the captured <see cref="InputState"/> snapshot. Components own the
+    /// decision of what to do with input.
+    /// </summary>
+    public virtual void OnProcessInput(InputState state) { }
+
     public virtual void OnUpdate(GameTime time) { }
 
     public virtual void OnEnd() { }

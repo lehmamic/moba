@@ -28,6 +28,14 @@ public abstract class GameHost : IDisposable
         }
     }
 
+    /// <summary>
+    /// Threads a per-frame <see cref="InputState"/> snapshot through the sim.
+    /// Called by the client host before <see cref="Update"/>; the server host
+    /// never calls it (no user input). Madhav, <i>Game Programming in C++</i>,
+    /// Ch. 2: <c>Game::ProcessInput</c>.
+    /// </summary>
+    public virtual void ProcessInput(InputState state) => Game.ProcessInput(state);
+
     public virtual void Update(float deltaSeconds)
     {
         var time = new GameTime(deltaSeconds, Game.TotalSeconds + deltaSeconds);
@@ -36,6 +44,13 @@ public abstract class GameHost : IDisposable
             system.OnUpdate(time);
         }
         Game.Update(deltaSeconds);
+        foreach (var system in _systems)
+        {
+            if (system is IPostUpdateSystem postUpdate)
+            {
+                postUpdate.OnPostUpdate(time);
+            }
+        }
     }
 
     public virtual void Shutdown()

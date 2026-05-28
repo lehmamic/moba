@@ -14,6 +14,8 @@ public class Game
 
     public double TotalSeconds { get; private set; }
 
+    public void ProcessInput(InputState state) => Scene.ProcessInput(state);
+
     public void Update(float deltaSeconds)
     {
         TotalSeconds += deltaSeconds;

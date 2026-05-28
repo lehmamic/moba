@@ -13,6 +13,7 @@
         <ProjectReference Include="..\MOBA.Utilities\MOBA.Utilities.csproj" />
         <ProjectReference Include="..\MOBA.Engine.Core\MOBA.Engine.Core.csproj" />
         <ProjectReference Include="..\MOBA.Engine.Networking\MOBA.Engine.Networking.csproj" />
+        <ProjectReference Include="..\MOBA.Engine.Networking.Riptide\MOBA.Engine.Networking.Riptide.csproj" />
         <ProjectReference Include="..\MOBA.Game\MOBA.Game.csproj" />
     </ItemGroup>
 

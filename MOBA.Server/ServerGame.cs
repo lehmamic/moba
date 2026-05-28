@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using MOBA.Engine.Core;
+using MOBA.Engine.Networking.Riptide;
 using MOBA.Game;
 using MOBA.Utilities;
 
@@ -20,8 +21,7 @@ public sealed class ServerGame : GameHost
     {
         // Single AssetManager for every server-side asset type. AddMapCache lives in
         // MOBA.Game as an extension method so both server and client deserialise the
-        // same JSON the same way. Future data caches (ability tables, champion
-        // stats, navmesh blobs) plug in beside it.
+        // same JSON the same way.
         var assets = new AssetManager();
         assets.AddMapCache();
         AddSystem(assets);
@@ -31,6 +31,22 @@ public sealed class ServerGame : GameHost
 
         var world = new MobaWorld(map);
         world.Populate(Game.Scene);
+
+        // Attach networking + movement components to the cube (id = 2 by convention).
+        foreach (var actor in Game.Scene.Actors)
+        {
+            if (actor is TestCubeActor cube)
+            {
+                _ = new NetworkIdentityComponent(cube, 2);
+                _ = new MoveTargetComponent(cube);
+            }
+        }
+
+        // Order matters: transport first (so MovementSystem.OnInitialize sees a live
+        // MessageReceived event source), then the systems that subscribe.
+        var transport = new RiptideServerTransport();
+        AddSystem(transport);
+        AddSystem(new MovementSystem(Game.Scene, transport));
     }
 
     public void Run()
