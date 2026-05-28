@@ -11,6 +11,7 @@ ADRs are immutable once accepted — never edit the Context, Decision, or Conseq
 - [ADR-005: 7-project solution layout](adr-005-project-structure.md)
 - [ADR-006: Riptide as networking library](adr-006-networking-riptide.md)
 - [ADR-007: Idiomatic .NET / C# code style](adr-007-dotnet-idiomatic-style.md)
+- [ADR-008: OpenGL backend lives in a sibling project](adr-008-opengl-backend-sibling-project.md)
 
 ## Adding an ADR
 

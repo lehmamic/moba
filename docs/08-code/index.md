@@ -7,9 +7,10 @@ Code-level conventions and the repo layout. The principles behind these conventi
 ## Repo layout
 
 ```
-MOBA.Engine.Core/          – Sim infra: Game, Scene, Actor, Component, GameTime
-MOBA.Engine.Graphics/      – IGraphicsBackend + abstractions + OpenGL/ backend
-MOBA.Engine.Networking/    – INetTransport, NetChannel, NullTransport
+MOBA.Engine.Core/             – Sim infra: Game, Scene, Actor, Component, GameTime
+MOBA.Engine.Graphics/         – Backend-agnostic graphics abstractions + TextureLoader
+MOBA.Engine.Graphics.OpenGL/  – Concrete OpenGL backend (Silk.NET.OpenGL)
+MOBA.Engine.Networking/       – INetTransport, NetChannel, NullTransport
 MOBA.Game/                 – Sim: MobaWorld, Map, Actors, sim components
 MOBA.Game.Client/          – Render components, camera controllers, mesh/texture factories
 MOBA.Server/               – Headless entry point

@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <!-- GL backends use Silk.NET's void* overloads (e.g. DrawElements offset). -->
+        <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Silk.NET.OpenGL" />
+        <PackageReference Include="Silk.NET.Maths" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\MOBA.Engine.Graphics\MOBA.Engine.Graphics.csproj" />
+    </ItemGroup>
+
+</Project>

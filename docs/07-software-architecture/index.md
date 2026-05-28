@@ -6,24 +6,26 @@ High-level structure of the engine and game. Detailed code-level concerns (namin
 
 ## Project layout
 
-Seven assemblies. Compile-time references encode the [sim/render separation principle](../06-principles/index.md#3-simulation--rendering-separation).
+Eight production assemblies + one test assembly. Compile-time references encode the [sim/render separation principle](../06-principles/index.md#3-simulation--rendering-separation).
 
 | Project | Responsibility | May reference |
 |---|---|---|
 | `MOBA.Engine.Core` | Game loop, Actor/Component, Time, Scene | Silk.NET.Maths |
-| `MOBA.Engine.Graphics` | `IGraphicsBackend` + OpenGL backend, mesh/texture/shader abstractions | Engine.Core, Silk.NET.OpenGL, Silk.NET.Maths, StbImageSharp |
+| `MOBA.Engine.Graphics` | Backend-agnostic abstractions: `IGraphicsBackend`, `IMesh`, `ITexture`, `IShader`, `Material`, `Camera`, `Vertex`, `TextureLoader` | Engine.Core, Silk.NET.Maths, StbImageSharp |
+| `MOBA.Engine.Graphics.OpenGL` | Concrete OpenGL backend (`OpenGLBackend`, `OpenGLMesh`, `OpenGLTexture`, `OpenGLShader`) | Engine.Graphics, Silk.NET.OpenGL, Silk.NET.Maths |
 | `MOBA.Engine.Networking` | `INetTransport`, channels, `NullTransport` | (no external deps; Riptide arrives later) |
 | `MOBA.Game` | Sim: MobaWorld, Map, actors, sim components | Engine.Core, Engine.Networking, Silk.NET.Maths |
 | `MOBA.Game.Client` | Render components, camera controllers, mesh/texture factories | Engine.Core, Engine.Graphics, Game, Silk.NET.Input, Silk.NET.Maths |
 | `MOBA.Server` | Headless entry point | Engine.Core, Engine.Networking, Game |
-| `MOBA.Client` | Window + GL bootstrap + asset loading + game loop | Engine.Core, Engine.Graphics, Engine.Networking, Game, Game.Client, Silk.NET (Windowing/OpenGL/Input/Maths) |
+| `MOBA.Client` | Window + GL bootstrap + asset loading + game loop | Engine.Core, Engine.Graphics, Engine.Graphics.OpenGL, Engine.Networking, Game, Game.Client, Silk.NET (Windowing/OpenGL/Input/Maths) |
 
-**Hard invariants** (verified by `.csproj` inspection, CI sanity-check planned):
+**Hard invariants** (verified by `.csproj` inspection + `tests/MOBA.Architecture.Tests/`):
 
-- `MOBA.Game.csproj` does **not** reference `MOBA.Engine.Graphics` and **no** Silk graphics package.
-- `MOBA.Server.csproj` does **not** reference `Silk.NET.Windowing`, `Silk.NET.OpenGL`, `Silk.NET.Input`.
+- `MOBA.Engine.Graphics.csproj` references neither its OpenGL backend nor `Silk.NET.OpenGL` (the abstraction does not know its implementation).
+- `MOBA.Game.csproj` references neither `MOBA.Engine.Graphics` nor `MOBA.Engine.Graphics.OpenGL` nor any Silk graphics package.
+- `MOBA.Server.csproj` references neither `Silk.NET.Windowing` / `Silk.NET.OpenGL` / `Silk.NET.Input`, nor the OpenGL backend.
 
-See [ADR-005](../14-decision-log/adr-005-project-structure.md) for the rationale.
+See [ADR-005](../14-decision-log/adr-005-project-structure.md) and [ADR-008](../14-decision-log/adr-008-opengl-backend-sibling-project.md).
 
 ---
 
@@ -54,8 +56,8 @@ See [ADR-005](../14-decision-log/adr-005-project-structure.md) for the rationale
 
 Game code only talks to abstractions: `IGraphicsBackend`, `IMesh`, `ITexture`, `IShader`, `Material`, `Camera`, `Vertex`.
 
-- The OpenGL backend lives under `MOBA.Engine.Graphics/OpenGL/`.
-- A Vulkan backend will arrive under `Vulkan/` (or as a sibling assembly if dependencies force it).
+- The OpenGL backend lives in the sibling project `MOBA.Engine.Graphics.OpenGL`; the abstraction project does not reference `Silk.NET.OpenGL` ([ADR-008](../14-decision-log/adr-008-opengl-backend-sibling-project.md)).
+- A Vulkan backend will arrive as `MOBA.Engine.Graphics.Vulkan` alongside it.
 - **Vulkan patch (later):** Y-flip in clip space (negative viewport height or `M22 *= -1` in the projection) + Z-range remap [−1, +1] → [0, +1]. World/view matrices stay RH Y-up.
 - GLSL shaders live under `assets/shaders/` and are loaded from file (`File.ReadAllText`) at startup. Textures live under `assets/textures/` and are loaded via `MOBA.Engine.Graphics.TextureLoader` (StbImageSharp; PNG/JPG/TGA/BMP, RGBA8, vertical flip on load to match OpenGL's bottom-left texture origin). Hot-reload (re-read on file change) is a later step.
 

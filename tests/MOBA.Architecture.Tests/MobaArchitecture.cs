@@ -13,6 +13,7 @@ public static class MobaArchitecture
 {
     public static readonly Assembly EngineCoreAssembly = Assembly.Load("MOBA.Engine.Core");
     public static readonly Assembly EngineGraphicsAssembly = Assembly.Load("MOBA.Engine.Graphics");
+    public static readonly Assembly EngineGraphicsOpenGLAssembly = Assembly.Load("MOBA.Engine.Graphics.OpenGL");
     public static readonly Assembly EngineNetworkingAssembly = Assembly.Load("MOBA.Engine.Networking");
     public static readonly Assembly GameAssembly = Assembly.Load("MOBA.Game");
     public static readonly Assembly GameClientAssembly = Assembly.Load("MOBA.Game.Client");
@@ -29,6 +30,7 @@ public static class MobaArchitecture
         .LoadAssemblies(
             EngineCoreAssembly,
             EngineGraphicsAssembly,
+            EngineGraphicsOpenGLAssembly,
             EngineNetworkingAssembly,
             GameAssembly,
             GameClientAssembly,

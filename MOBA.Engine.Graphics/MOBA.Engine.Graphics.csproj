@@ -1,13 +1,13 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
-    <PropertyGroup>
-        <!-- Standard for GL backends: Silk.NET's void* overloads (e.g. DrawElements offset). -->
-        <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    </PropertyGroup>
+    <!--
+      Backend-agnostic graphics abstractions. The concrete OpenGL backend lives in the
+      sibling project MOBA.Engine.Graphics.OpenGL; this project must not reference any
+      Silk.NET graphics-API package (see ADR-008).
+    -->
 
     <ItemGroup>
         <PackageReference Include="Silk.NET.Maths" />
-        <PackageReference Include="Silk.NET.OpenGL" />
         <PackageReference Include="StbImageSharp" />
     </ItemGroup>
 
