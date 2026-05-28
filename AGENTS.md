@@ -119,3 +119,15 @@ deps: bump Silk.NET to 2.24.0
 - **Body:** wrapped at ~72 columns, explains the *why* — what motivated the change. Skip the body for truly trivial commits.
 - **No agent attribution.** Do not add `Co-Authored-By: Claude` or similar trailers — the git author is the author.
 - **No emoji.**
+
+### Commit flow — the agent must ask before committing
+
+The agent **never commits without explicit user approval**. For every commit:
+
+1. Stage the relevant change (`git add <paths>`) — selectively if the working copy contains material for multiple commits.
+2. **Show what is staged** in the chat — at minimum the file list (e.g. `git diff --cached --stat`), so the user can see scope at a glance.
+3. **Propose the commit message** (subject + body, in the format above).
+4. **Wait for explicit approval** — the user saying "commit", "go", "yes", "ok commit", or similar.
+5. Then run `git commit`.
+
+If the user has not explicitly approved, leave the change staged (or unstaged) in the working copy. Do **not** pre-emptively commit "to be helpful" — the user reviews the proposed file set + message first.
