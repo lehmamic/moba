@@ -11,3 +11,12 @@ ADRs are immutable once accepted — never edit the Context, Decision, or Conseq
 - [ADR-005: 7-project solution layout](adr-005-project-structure.md)
 - [ADR-006: Riptide as networking library](adr-006-networking-riptide.md)
 - [ADR-007: Idiomatic .NET / C# code style](adr-007-dotnet-idiomatic-style.md)
+
+## Adding an ADR
+
+When an architectural decision is made or changed:
+
+1. Create a new file `adr-NNN-short-title.md` based on [adr-000-template.md](adr-000-template.md). `NNN` is the next free three-digit number.
+2. Set Status to `Accepted` (or `Proposed` if still being discussed).
+3. Add an entry to the list above.
+4. If an old ADR is superseded: change its Status to `Superseded by [ADR-NNN](adr-NNN-title.md)`. **Nothing else** is edited on the old ADR — Context, Decision, and Consequences remain immutable.
