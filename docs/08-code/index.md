@@ -12,6 +12,7 @@ MOBA.Engine.Core/             – Sim infra: Game, Scene, Actor, Component, Game
 MOBA.Engine.Graphics/         – Backend-agnostic graphics abstractions + TextureLoader
 MOBA.Engine.Graphics.OpenGL/  – Concrete OpenGL backend (Silk.NET.OpenGL)
 MOBA.Engine.Networking/       – INetTransport, NetChannel, NullTransport
+MOBA.Engine.Networking.Riptide/ – Concrete UDP transport (Riptide)
 MOBA.Game/                 – Sim: MobaWorld, Map, Actors, sim components
 MOBA.Game.Client/          – Render components, camera controllers, mesh/texture factories
 MOBA.Server/               – Headless entry point

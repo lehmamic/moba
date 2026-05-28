@@ -14,7 +14,8 @@ Eight production assemblies + one test assembly. Compile-time references encode 
 | `MOBA.Engine.Core` | Game loop, Actor/Component, Time, Scene | Utilities, Silk.NET.Maths |
 | `MOBA.Engine.Graphics` | Backend-agnostic abstractions: `IGraphicsBackend`, `IMesh`, `ITexture`, `IShader`, `Material`, `Camera`, `Vertex`, `TextureLoader` | Engine.Core, Silk.NET.Maths, StbImageSharp |
 | `MOBA.Engine.Graphics.OpenGL` | Concrete OpenGL backend (`OpenGLBackend`, `OpenGLMesh`, `OpenGLTexture`, `OpenGLShader`) | Engine.Graphics, Silk.NET.OpenGL, Silk.NET.Maths |
-| `MOBA.Engine.Networking` | `INetTransport`, channels, `NullTransport` | (no external deps; Riptide arrives later) |
+| `MOBA.Engine.Networking` | Backend-agnostic transport: `INetTransport`, `NetChannel`, `NullTransport` | (no external deps) |
+| `MOBA.Engine.Networking.Riptide` | Concrete UDP transport (`RiptideServerTransport`, `RiptideClientTransport`) | Engine.Core, Engine.Networking, RiptideNetworking.Riptide |
 | `MOBA.Game` | Sim: MobaWorld, Map, actors, sim components | Engine.Core, Engine.Networking, Silk.NET.Maths |
 | `MOBA.Game.Client` | Render components, camera controllers, mesh/texture factories | Engine.Core, Engine.Graphics, Game, Silk.NET.Input, Silk.NET.Maths |
 | `MOBA.Server` | Headless entry point | Engine.Core, Engine.Networking, Game |
@@ -108,8 +109,9 @@ See [ADR-009](../14-decision-log/adr-009-gamehost-shared-abstraction.md) for the
 
 Game code only talks to `INetTransport` + `NetChannel`.
 
-- Concrete library: **Riptide** (`RiptideNetworking.Riptide`), concrete implementation deferred to the netcode phase.
-- First skeleton: `NullTransport` (in-process loopback). Send = no-op.
-- When the Riptide adapter is built: `NetChannel.Reliable` → Riptide reliable channel, `NetChannel.Unreliable` → Riptide unreliable; `MessageReceived` is adapted from Riptide's `MessageReceived`.
+- Concrete library: **Riptide** (`RiptideNetworking.Riptide`), implemented in the sibling project `MOBA.Engine.Networking.Riptide` ([ADR-011](../14-decision-log/adr-011-riptide-transport-sibling-project.md)).
+- `RiptideServerTransport` listens on UDP/7777 and `RiptideClientTransport` connects to `127.0.0.1:7777`. Both implement `INetTransport` plus `IEngineSystem` so a `GameHost` drives them via `AddSystem(...)`: `OnInitialize` opens the socket / dials the server, `OnUpdate` pumps Riptide's required tick, `OnShutdown` closes.
+- `NetChannel.Reliable` → `MessageSendMode.Reliable`, `NetChannel.Unreliable` → `MessageSendMode.Unreliable`. Payload bytes pass through opaquely — the game-side message protocol is hand-rolled binary on top.
+- `NullTransport` stays as the no-op stub for tests and disconnected scenarios.
 
 See [ADR-006](../14-decision-log/adr-006-networking-riptide.md).

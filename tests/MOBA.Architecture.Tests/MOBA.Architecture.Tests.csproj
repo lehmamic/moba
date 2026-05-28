@@ -24,6 +24,7 @@
         <ProjectReference Include="..\..\MOBA.Engine.Core\MOBA.Engine.Core.csproj" />
         <ProjectReference Include="..\..\MOBA.Engine.Graphics\MOBA.Engine.Graphics.csproj" />
         <ProjectReference Include="..\..\MOBA.Engine.Networking\MOBA.Engine.Networking.csproj" />
+        <ProjectReference Include="..\..\MOBA.Engine.Networking.Riptide\MOBA.Engine.Networking.Riptide.csproj" />
         <ProjectReference Include="..\..\MOBA.Game\MOBA.Game.csproj" />
         <ProjectReference Include="..\..\MOBA.Game.Client\MOBA.Game.Client.csproj" />
         <ProjectReference Include="..\..\MOBA.Server\MOBA.Server.csproj" />

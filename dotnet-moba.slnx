@@ -4,6 +4,7 @@
   <Project Path="MOBA.Engine.Graphics/MOBA.Engine.Graphics.csproj" />
   <Project Path="MOBA.Engine.Graphics.OpenGL/MOBA.Engine.Graphics.OpenGL.csproj" />
   <Project Path="MOBA.Engine.Networking/MOBA.Engine.Networking.csproj" />
+  <Project Path="MOBA.Engine.Networking.Riptide/MOBA.Engine.Networking.Riptide.csproj" />
   <Project Path="MOBA.Game/MOBA.Game.csproj" />
   <Project Path="MOBA.Game.Client/MOBA.Game.Client.csproj" />
   <Project Path="MOBA.Server/MOBA.Server.csproj" />

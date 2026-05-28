@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <!--
+      Concrete UDP transport for INetTransport. Sibling to MOBA.Engine.Networking
+      so the abstraction project stays free of the Riptide package reference
+      (see ADR-011).
+    -->
+
+    <ItemGroup>
+        <PackageReference Include="RiptideNetworking.Riptide" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\MOBA.Engine.Core\MOBA.Engine.Core.csproj" />
+        <ProjectReference Include="..\MOBA.Engine.Networking\MOBA.Engine.Networking.csproj" />
+    </ItemGroup>
+
+</Project>

@@ -91,7 +91,8 @@ Use the [Conventional Commits 1.0](https://www.conventionalcommits.org/en/v1.0.0
 | `engine-core` | `MOBA.Engine.Core` |
 | `engine-graphics` | `MOBA.Engine.Graphics` (backend-agnostic abstractions) |
 | `engine-graphics-opengl` | `MOBA.Engine.Graphics.OpenGL` (concrete OpenGL backend) |
-| `engine-networking` | `MOBA.Engine.Networking` |
+| `engine-networking` | `MOBA.Engine.Networking` (backend-agnostic abstraction) |
+| `engine-networking-riptide` | `MOBA.Engine.Networking.Riptide` (concrete UDP backend) |
 | `game` | `MOBA.Game` |
 | `game-client` | `MOBA.Game.Client` |
 | `server` | `MOBA.Server` |

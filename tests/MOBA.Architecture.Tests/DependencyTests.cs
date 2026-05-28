@@ -168,24 +168,57 @@ public class DependencyTests
                     EngineCoreAssembly,
                     EngineGraphicsAssembly,
                     EngineGraphicsOpenGLAssembly,
+                    EngineNetworkingRiptideAssembly,
                     GameAssembly,
                     GameClientAssembly,
                     ServerAssembly,
                     ClientAssembly))
-            .Because("Networking is a leaf transport abstraction; it must stay unaware of Core/Game/Graphics.")
+            .Because("Networking is a leaf transport abstraction; it must stay unaware of Core/Game/Graphics and its own Riptide implementation.")
             .Check(Instance);
     }
 
     [Fact]
-    public void EngineNetworking_does_not_depend_on_any_Silk_assembly()
+    public void EngineNetworking_does_not_depend_on_Silk_or_Riptide()
     {
         Types().That().ResideInAssembly(EngineNetworkingAssembly)
             .Should().NotDependOnAny(
                 Types().That().ResideInAssembly(
                     SilkOpenGLAssembly,
                     SilkWindowingAssembly,
+                    SilkInputAssembly,
+                    RiptideAssembly))
+            .Because("ADR-011: the abstraction project does not see Riptide types.")
+            .Check(Instance);
+    }
+
+    // ─── MOBA.Engine.Networking.Riptide — concrete UDP backend ────────────────────────
+
+    [Fact]
+    public void EngineNetworkingRiptide_does_not_depend_on_higher_layers()
+    {
+        Types().That().ResideInAssembly(EngineNetworkingRiptideAssembly)
+            .Should().NotDependOnAny(
+                Types().That().ResideInAssembly(
+                    EngineGraphicsAssembly,
+                    EngineGraphicsOpenGLAssembly,
+                    GameAssembly,
+                    GameClientAssembly,
+                    ServerAssembly,
+                    ClientAssembly))
+            .Because("ADR-011: the Riptide backend only knows the abstraction it implements; game and higher layers are off-limits.")
+            .Check(Instance);
+    }
+
+    [Fact]
+    public void EngineNetworkingRiptide_does_not_depend_on_Silk_or_windowing_or_input()
+    {
+        Types().That().ResideInAssembly(EngineNetworkingRiptideAssembly)
+            .Should().NotDependOnAny(
+                Types().That().ResideInAssembly(
+                    SilkOpenGLAssembly,
+                    SilkWindowingAssembly,
                     SilkInputAssembly))
-            .Because("Networking has no business pulling Silk packages; the concrete transport (Riptide) lands later.")
+            .Because("Networking has no business with graphics, windowing, or input.")
             .Check(Instance);
     }
 
@@ -203,6 +236,30 @@ public class DependencyTests
                     ServerAssembly,
                     ClientAssembly))
             .Because("ADR-004: simulation is renderer-agnostic and must run headless on the server.")
+            .Check(Instance);
+    }
+
+    [Fact]
+    public void Game_does_not_depend_on_Riptide_directly()
+    {
+        Types().That().ResideInAssembly(GameAssembly)
+            .Should().NotDependOnAny(
+                Types().That().ResideInAssembly(
+                    EngineNetworkingRiptideAssembly,
+                    RiptideAssembly))
+            .Because("ADR-006 + ADR-011: game code only sees INetTransport, never Riptide types directly.")
+            .Check(Instance);
+    }
+
+    [Fact]
+    public void GameClient_does_not_depend_on_Riptide_directly()
+    {
+        Types().That().ResideInAssembly(GameClientAssembly)
+            .Should().NotDependOnAny(
+                Types().That().ResideInAssembly(
+                    EngineNetworkingRiptideAssembly,
+                    RiptideAssembly))
+            .Because("ADR-006 + ADR-011: client-side game code only sees INetTransport, never Riptide types directly.")
             .Check(Instance);
     }
 
