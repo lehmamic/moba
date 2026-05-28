@@ -12,7 +12,7 @@
 dotnet build dotnet-moba.slnx
 ```
 
-All seven production projects (plus the architecture-tests project) must build with **zero warnings**. `TreatWarningsAsErrors=true` + `EnforceCodeStyleInBuild=true` (see [Code](../08-code/index.md)) means style violations also break the build.
+All eight production projects (plus the architecture-tests project) must build with **zero warnings**. `TreatWarningsAsErrors=true` + `EnforceCodeStyleInBuild=true` (see [Code](../08-code/index.md)) means style violations also break the build.
 
 ## Test
 
@@ -35,6 +35,12 @@ dotnet run --project MOBA.Server
 ```sh
 dotnet run --project MOBA.Client
 ```
+
+Both `Program.cs` files are intentionally two-liners — all behaviour lives in `ClientGame` / `ServerGame` (see [Software Architecture — Hosting & system lifecycle](../07-software-architecture/index.md#hosting--system-lifecycle)).
+
+### Running multiple matches locally
+
+One server process hosts exactly one match ([ADR-010](../14-decision-log/adr-010-one-match-per-process.md)). To test concurrent matches locally, open multiple terminals and run `dotnet run --project MOBA.Server` in each. Each instance is independent: separate sim time, separate console output, separate Ctrl-C.
 
 ## Client controls (skeleton)
 

@@ -8,7 +8,7 @@ namespace MOBA.Game.Client;
 /// to a sim actor. The server build does not contain this code — the headless server is
 /// sim-only and does not reference MOBA.Engine.Graphics at all.
 /// </summary>
-public sealed class MeshRendererComponent : Component
+public sealed class MeshRendererComponent : Component, IRenderable
 {
     public MeshRendererComponent(Actor owner, IMesh mesh, Material material) : base(owner)
     {

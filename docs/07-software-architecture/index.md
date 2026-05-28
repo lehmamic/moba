@@ -65,6 +65,30 @@ See [ADR-003](../14-decision-log/adr-003-graphics-backend-abstraction.md).
 
 ---
 
+## Hosting & system lifecycle
+
+Both entry points share an abstract `GameHost` in `MOBA.Engine.Core`. It owns the sim `Game` and a list of `IEngineSystem` instances, and propagates the per-tick lifecycle.
+
+- `IEngineSystem` (in `MOBA.Engine.Core`) — `OnInitialize` / `OnUpdate(GameTime)` / `OnShutdown` plus `IDisposable`.
+- `GameHost.Initialize()` runs `OnInitialize` on each system in registration order; `Update(dt)` runs `OnUpdate` on each system then `Game.Update(dt)`; `Shutdown()` runs `OnShutdown` in **LIFO** order and is idempotent. `Run()` is *not* on the base — the cadence differs.
+- **`ClientGame : GameHost`** (in `MOBA.Client`) — owns the Silk.NET `IWindow` and the OpenGL backend. `Run()` delegates to `_window.Run()`; window callbacks route into the base lifecycle. Hosts these systems: `InputSystem`, `AssetManager`, `CameraSwitcher`. The `Renderer` is invoked from the window's render callback (not as a system, because per-frame ≠ per-tick).
+- **`ServerGame : GameHost`** (in `MOBA.Server`) — owns the fixed-step loop. `Run()` calls `Initialize()`, loops `Update(TickInterval)` with a sleep, and calls `Shutdown()` on Ctrl-C. Hosts no systems yet (Networking arrives in a later phase).
+
+Each `Program.cs` is intentionally a two-liner:
+
+```csharp
+using var game = new ClientGame();  // or new ServerGame()
+game.Run();
+```
+
+**Multi-match scaling** is out-of-process: one server process hosts one match; multi-match means multiple processes. See [ADR-010](../14-decision-log/adr-010-one-match-per-process.md).
+
+Component-side: `MeshRendererComponent` (in `MOBA.Game.Client`) implements `IRenderable` (in `MOBA.Engine.Graphics`). The `Renderer` discovers what to draw by walking `Scene.Actors` and picking components that implement `IRenderable`, so it never sees client-side types.
+
+See [ADR-009](../14-decision-log/adr-009-gamehost-shared-abstraction.md) for the GameHost rationale.
+
+---
+
 ## Networking transport abstraction
 
 Game code only talks to `INetTransport` + `NetChannel`.

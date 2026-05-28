@@ -1,3 +1,4 @@
+using MOBA.Engine.Core;
 using MOBA.Engine.Graphics;
 using Silk.NET.Input;
 
@@ -5,8 +6,10 @@ namespace MOBA.Game.Client;
 
 /// <summary>
 /// Holds the free-fly + top-down camera controllers; F1 toggles the active camera.
+/// Implements <see cref="IEngineSystem"/> so its per-frame update flows through the
+/// <see cref="GameHost"/> instead of being called manually from the entry point.
 /// </summary>
-public sealed class CameraSwitcher
+public sealed class CameraSwitcher : IEngineSystem
 {
     private readonly IKeyboard _keyboard;
 
@@ -37,6 +40,14 @@ public sealed class CameraSwitcher
         FreeFly.Camera.AspectRatio = aspectRatio;
         TopDown.Camera.AspectRatio = aspectRatio;
     }
+
+    public void OnInitialize() { }
+
+    public void OnUpdate(GameTime time) => Update(time.DeltaSeconds);
+
+    public void OnShutdown() => _keyboard.KeyDown -= OnKeyDown;
+
+    public void Dispose() { }
 
     private void OnKeyDown(IKeyboard keyboard, Key key, int scancode)
     {

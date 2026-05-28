@@ -1,11 +1,11 @@
 namespace MOBA.Engine.Core;
 
 /// <summary>
-/// Sim host. Owns the Scene and drives the tick.
+/// Sim host. Owns the Scene and advances the simulation one step at a time.
 /// The actual loop lives in the entry point:
 /// <list type="bullet">
-///   <item>Server: fixed-step loop calls <see cref="Tick"/> at a constant rate.</item>
-///   <item>Client: the Silk.NET window's Update callback calls <see cref="Tick"/> with a variable dt.</item>
+///   <item>Server: fixed-step loop calls <see cref="Update"/> at a constant rate.</item>
+///   <item>Client: the Silk.NET window's Update callback calls <see cref="Update"/> with a variable dt.</item>
 /// </list>
 /// </summary>
 public class Game
@@ -14,7 +14,7 @@ public class Game
 
     public double TotalSeconds { get; private set; }
 
-    public void Tick(float deltaSeconds)
+    public void Update(float deltaSeconds)
     {
         TotalSeconds += deltaSeconds;
         Scene.Update(new GameTime(deltaSeconds, TotalSeconds));

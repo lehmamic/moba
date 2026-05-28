@@ -12,6 +12,8 @@ ADRs are immutable once accepted — never edit the Context, Decision, or Conseq
 - [ADR-006: Riptide as networking library](adr-006-networking-riptide.md)
 - [ADR-007: Idiomatic .NET / C# code style](adr-007-dotnet-idiomatic-style.md)
 - [ADR-008: OpenGL backend lives in a sibling project](adr-008-opengl-backend-sibling-project.md)
+- [ADR-009: GameHost shared between client and server](adr-009-gamehost-shared-abstraction.md)
+- [ADR-010: One match per server process](adr-010-one-match-per-process.md)
 
 ## Adding an ADR
 
