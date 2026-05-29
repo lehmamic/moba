@@ -6,19 +6,19 @@ using Silk.NET.Maths;
 namespace MOBA.Game;
 
 /// <summary>
-/// Server-side network handler for movement. Two phases:
+/// Server-side movement handler. Two phases:
 /// <list type="bullet">
-///   <item><b>Pre-sim (event):</b> incoming <see cref="MoveCommandMessage"/> via the
-///     transport. Sets <see cref="MoveTargetComponent.Target"/> on the cube and
-///     spawns the destination marker; broadcasts an <see cref="ActorSpawnMessage"/>.</item>
+///   <item><b>Pre-sim (event):</b> incoming <see cref="MoveCommandMessage"/>s
+///     are routed via <see cref="PlayerConnectionSystem"/> to the sender's own
+///     player actor, the <see cref="MoveTargetComponent.Target"/> is set, and a
+///     destination marker is spawned + broadcast.</item>
 ///   <item><b>Post-sim (<see cref="IPostUpdateSystem.OnPostUpdate"/>):</b> walks
 ///     actors with a <see cref="MoveTargetComponent"/> + <see cref="NetworkIdentityComponent"/>
-///     and broadcasts position updates. When it sees <c>Target == null</c> but
-///     <c>MarkerId != null</c> (the component cleared the target this tick by
-///     arriving), the marker actor is removed from the scene and an
-///     <see cref="ActorDespawnMessage"/> is broadcast.</item>
+///     and broadcasts position updates. When the component cleared its target
+///     this tick (i.e. just arrived), the matching marker actor is removed and
+///     an <see cref="ActorDespawnMessage"/> is broadcast.</item>
 /// </list>
-/// The actual per-tick movement physics belongs to <see cref="MoveTargetComponent.OnUpdate"/>;
+/// The actual per-tick movement physics lives in <see cref="MoveTargetComponent.OnUpdate"/>;
 /// this system never mutates <see cref="Actor.Transform"/> directly.
 /// </summary>
 public sealed class MovementSystem : IEngineSystem, IPostUpdateSystem
@@ -26,22 +26,21 @@ public sealed class MovementSystem : IEngineSystem, IPostUpdateSystem
     private const uint FirstMarkerId = 100;
 
     private readonly Scene _scene;
-    private readonly INetTransport _transport;
+    private readonly IServerNetTransport _transport;
+    private readonly PlayerConnectionSystem _connections;
     private uint _nextMarkerId = FirstMarkerId;
 
-    public MovementSystem(Scene scene, INetTransport transport)
+    public MovementSystem(Scene scene, IServerNetTransport transport, PlayerConnectionSystem connections)
     {
         _scene = scene;
         _transport = transport;
+        _connections = connections;
     }
 
     public void OnInitialize() => _transport.MessageReceived += OnMessageReceived;
 
     public void OnUpdate(GameTime time)
     {
-        // Per-tick movement is handled by MoveTargetComponent itself; this system's
-        // work happens pre-sim via the event subscription (inbound commands) and
-        // post-sim via OnPostUpdate (outbound state broadcasts).
     }
 
     public void OnPostUpdate(GameTime time)
@@ -55,7 +54,6 @@ public sealed class MovementSystem : IEngineSystem, IPostUpdateSystem
                 continue;
             }
 
-            // Skip idle actors entirely.
             var hasTarget = moveTarget.Target is not null;
             var hasMarker = moveTarget.MarkerId is not null;
             if (!hasTarget && !hasMarker)
@@ -67,8 +65,6 @@ public sealed class MovementSystem : IEngineSystem, IPostUpdateSystem
 
             if (!hasTarget && hasMarker)
             {
-                // The component cleared its Target this tick - that means it just
-                // arrived. Tear down the marker.
                 DespawnMarker(moveTarget.MarkerId!.Value);
                 moveTarget.MarkerId = null;
             }
@@ -83,7 +79,7 @@ public sealed class MovementSystem : IEngineSystem, IPostUpdateSystem
         GC.SuppressFinalize(this);
     }
 
-    private void OnMessageReceived(ReadOnlyMemory<byte> payload)
+    private void OnMessageReceived(NetClientId sender, ReadOnlyMemory<byte> payload)
     {
         using var stream = new MemoryStream(payload.ToArray());
         using var reader = new BinaryReader(stream);
@@ -92,26 +88,19 @@ public sealed class MovementSystem : IEngineSystem, IPostUpdateSystem
         {
             return;
         }
-        HandleMoveCommand(MoveCommandMessage.ReadPayload(reader));
+        HandleMoveCommand(sender, MoveCommandMessage.ReadPayload(reader));
     }
 
-    private void HandleMoveCommand(MoveCommandMessage command)
+    private void HandleMoveCommand(NetClientId sender, MoveCommandMessage command)
     {
-        // Find the cube (id = 2 by hardcoded convention for the skeleton).
-        Actor? movable = null;
-        MoveTargetComponent? moveTarget = null;
-        foreach (var actor in _scene.Actors)
+        var actor = _connections.GetPlayerActor(sender);
+        if (actor is null)
         {
-            var netId = actor.GetComponent<NetworkIdentityComponent>();
-            var mt = actor.GetComponent<MoveTargetComponent>();
-            if (netId?.Id == 2 && mt is not null)
-            {
-                movable = actor;
-                moveTarget = mt;
-                break;
-            }
+            // Move command from a client that hasn't joined yet — ignore.
+            return;
         }
-        if (movable is null || moveTarget is null)
+        var moveTarget = actor.GetComponent<MoveTargetComponent>();
+        if (moveTarget is null)
         {
             return;
         }
@@ -121,26 +110,22 @@ public sealed class MovementSystem : IEngineSystem, IPostUpdateSystem
             DespawnMarker(oldMarkerId);
         }
 
-        var target = new Vector3D<float>(command.TargetX, movable.Transform.Position.Y, command.TargetZ);
+        var target = new Vector3D<float>(command.TargetX, actor.Transform.Position.Y, command.TargetZ);
         moveTarget.Target = target;
 
         var markerId = _nextMarkerId++;
-        // Marker sits just above the ground, beneath the cube's centre, so it stays
-        // visible until the cube arrives at the click point.
         var markerPosition = new Vector3D<float>(command.TargetX, 0.5f, command.TargetZ);
         var marker = new MarkerActor(markerId, markerPosition);
         _scene.AddActor(marker);
         moveTarget.MarkerId = markerId;
 
         var spawn = new ActorSpawnMessage(markerId, ActorKind.Marker, markerPosition.X, markerPosition.Y, markerPosition.Z);
-        _transport.Send(NetChannel.Reliable, spawn.Serialize());
+        _transport.SendToAll(NetChannel.Reliable, spawn.Serialize());
     }
 
     private void BroadcastPositionUpdate(Actor actor, uint id)
     {
         var position = actor.Transform.Position;
-        // Send the gameplay-meaningful facing direction rather than a raw rotation
-        // angle. The XZ projection is enough because MOBA characters do not pitch.
         var forward = actor.Transform.Forward;
         var message = new ActorPositionUpdateMessage(
             id,
@@ -149,7 +134,7 @@ public sealed class MovementSystem : IEngineSystem, IPostUpdateSystem
             position.Z,
             forward.X,
             forward.Z);
-        _transport.Send(NetChannel.Unreliable, message.Serialize());
+        _transport.SendToAll(NetChannel.Unreliable, message.Serialize());
     }
 
     private void DespawnMarker(uint markerId)
@@ -169,6 +154,6 @@ public sealed class MovementSystem : IEngineSystem, IPostUpdateSystem
         }
         _scene.RemoveActor(marker);
         var despawn = new ActorDespawnMessage(markerId);
-        _transport.Send(NetChannel.Reliable, despawn.Serialize());
+        _transport.SendToAll(NetChannel.Reliable, despawn.Serialize());
     }
 }

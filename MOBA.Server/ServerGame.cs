@@ -32,21 +32,15 @@ public sealed class ServerGame : GameHost
         var world = new MobaWorld(map);
         world.Populate(Game.Scene);
 
-        // Attach networking + movement components to the cube (id = 2 by convention).
-        foreach (var actor in Game.Scene.Actors)
-        {
-            if (actor is TestCubeActor cube)
-            {
-                _ = new NetworkIdentityComponent(cube, 2);
-                _ = new MoveTargetComponent(cube);
-            }
-        }
-
-        // Order matters: transport first (so MovementSystem.OnInitialize sees a live
-        // MessageReceived event source), then the systems that subscribe.
+        // Order matters: transport first so subsequent systems can subscribe
+        // during their OnInitialize. PlayerConnectionSystem owns the
+        // NetClientId → PlayerActor map; MovementSystem reads it to route
+        // MoveCommands and broadcasts position updates.
         var transport = new RiptideServerTransport();
         AddSystem(transport);
-        AddSystem(new MovementSystem(Game.Scene, transport));
+        var connections = new PlayerConnectionSystem(Game.Scene, transport);
+        AddSystem(connections);
+        AddSystem(new MovementSystem(Game.Scene, transport, connections));
     }
 
     public void Run()

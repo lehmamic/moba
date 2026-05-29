@@ -7,10 +7,20 @@ using Silk.NET.Maths;
 namespace MOBA.Game.Client;
 
 /// <summary>
-/// Applies server messages to the local scene: spawn / position / despawn. Holds
-/// the authoritative <see cref="uint"/> → local <see cref="Actor"/> map; the
-/// entry point registers pre-spawned actors (cube = 2) up front, server-spawned
-/// markers register here as <see cref="ActorSpawnMessage"/> arrives.
+/// Applies server messages to the local scene. Walks the wire format
+/// (ActorSpawn / ActorPositionUpdate / ActorDespawn / AssignLocalActor) and
+/// instantiates / updates / removes the corresponding client-side actors.
+///
+/// <para>
+/// On <see cref="IEngineSystem.OnInitialize"/> the system also sends a
+/// <see cref="JoinMessage"/> to the server, which kicks off the connection-
+/// driven spawn flow: the server replies with an
+/// <see cref="AssignLocalActorMessage"/> (which we remember) and a series of
+/// <see cref="ActorSpawnMessage"/>s. When an ActorSpawn arrives for the
+/// network id the server assigned us, this system attaches a
+/// <see cref="LocalPlayerInputComponent"/>; remote players (ourselves seeing
+/// other clients) get only the visual + position-update plumbing.
+/// </para>
 /// </summary>
 public sealed class NetworkSyncSystem : IEngineSystem
 {
@@ -18,29 +28,45 @@ public sealed class NetworkSyncSystem : IEngineSystem
     private readonly INetTransport _transport;
     private readonly AssetManager _assets;
     private readonly Material _markerMaterial;
+    private readonly Model _playerModel;
+    private readonly CameraSwitcher _cameras;
     private readonly Dictionary<uint, Actor> _actorsById = [];
+    private uint? _localPlayerNetworkId;
 
     public NetworkSyncSystem(
         Scene scene,
         INetTransport transport,
         AssetManager assets,
-        Material markerMaterial)
+        Material markerMaterial,
+        Model playerModel,
+        CameraSwitcher cameras)
     {
         _scene = scene;
         _transport = transport;
         _assets = assets;
         _markerMaterial = markerMaterial;
+        _playerModel = playerModel;
+        _cameras = cameras;
     }
 
-    public void Register(uint id, Actor actor) => _actorsById[id] = actor;
+    public void OnInitialize()
+    {
+        _transport.MessageReceived += OnMessageReceived;
+        // Kick off the multi-player handshake: ask the server to spawn a
+        // player actor for us. The matching AssignLocalActor + ActorSpawn
+        // come back as ordinary messages.
+        _transport.Send(NetChannel.Reliable, new JoinMessage().Serialize());
+    }
 
-    public void OnInitialize() => _transport.MessageReceived += OnMessageReceived;
-
-    public void OnUpdate(GameTime time) { }
+    public void OnUpdate(GameTime time)
+    {
+    }
 
     public void OnShutdown() => _transport.MessageReceived -= OnMessageReceived;
 
-    public void Dispose() { }
+    public void Dispose()
+    {
+    }
 
     private void OnMessageReceived(ReadOnlyMemory<byte> payload)
     {
@@ -49,6 +75,9 @@ public sealed class NetworkSyncSystem : IEngineSystem
         var type = (MessageType)reader.ReadByte();
         switch (type)
         {
+            case MessageType.AssignLocalActor:
+                HandleAssignLocalActor(AssignLocalActorMessage.ReadPayload(reader));
+                break;
             case MessageType.ActorSpawn:
                 HandleSpawn(ActorSpawnMessage.ReadPayload(reader));
                 break;
@@ -59,19 +88,61 @@ public sealed class NetworkSyncSystem : IEngineSystem
                 HandleDespawn(ActorDespawnMessage.ReadPayload(reader));
                 break;
             case MessageType.MoveCommand:
-                // Client → Server message; ignore if echoed back.
+            case MessageType.Join:
+                // Client → server messages — ignore if ever echoed back.
                 break;
             default:
                 break;
         }
     }
 
+    private void HandleAssignLocalActor(AssignLocalActorMessage message)
+    {
+        _localPlayerNetworkId = message.NetworkId;
+        // If the matching ActorSpawn happened to arrive first (out-of-order on
+        // the same channel shouldn't happen with Riptide reliable, but be safe),
+        // attach the input component now.
+        if (_actorsById.TryGetValue(message.NetworkId, out var actor)
+            && actor is PlayerActor player
+            && player.GetComponent<LocalPlayerInputComponent>() is null)
+        {
+            _ = new LocalPlayerInputComponent(player, _cameras, _transport);
+        }
+    }
+
     private void HandleSpawn(ActorSpawnMessage message)
     {
-        if (message.Kind != ActorKind.Marker)
+        switch (message.Kind)
         {
+            case ActorKind.Player:
+                SpawnPlayer(message);
+                break;
+            case ActorKind.Marker:
+                SpawnMarker(message);
+                break;
+        }
+    }
+
+    private void SpawnPlayer(ActorSpawnMessage message)
+    {
+        if (_actorsById.ContainsKey(message.Id))
+        {
+            // Idempotent — duplicate spawn from a catch-up replay.
             return;
         }
+        var player = new PlayerActor(new Vector3D<float>(message.X, message.Y, message.Z));
+        _ = new NetworkIdentityComponent(player, message.Id);
+        _ = new SkeletalMeshRendererComponent(player, _playerModel);
+        if (_localPlayerNetworkId == message.Id)
+        {
+            _ = new LocalPlayerInputComponent(player, _cameras, _transport);
+        }
+        _scene.AddActor(player);
+        _actorsById[message.Id] = player;
+    }
+
+    private void SpawnMarker(ActorSpawnMessage message)
+    {
         var marker = new MarkerActor(message.Id, new Vector3D<float>(message.X, message.Y, message.Z));
         _ = new MeshRendererComponent(marker, _assets.LoadSphereMesh(), _markerMaterial);
         _scene.AddActor(marker);

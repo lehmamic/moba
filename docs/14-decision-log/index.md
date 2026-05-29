@@ -18,6 +18,7 @@ ADRs are immutable once accepted — never edit the Context, Decision, or Conseq
 - [ADR-012: Classical Phong lighting with one directional light and Vertex-with-Normal layout](adr-012-phong-lighting-vertex-normals.md)
 - [ADR-013: glTF 2.0 (.glb) as the model format, via SharpGLTF, with a project-owned shader registry](adr-013-gltf-model-format.md)
 - [ADR-014: Skeletal animation via matrix-palette skinning, ported from Madhav ch.12](adr-014-skeletal-animation.md)
+- [ADR-015: Multi-player connection + player-spawn flow](adr-015-multi-player-connection-flow.md)
 
 ## Adding an ADR
 

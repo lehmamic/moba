@@ -11,6 +11,10 @@ public enum MessageType : byte
     ActorSpawn = 2,
     ActorPositionUpdate = 3,
     ActorDespawn = 4,
+    /// <summary>Client → Server: "I want to play."</summary>
+    Join = 5,
+    /// <summary>Server → Client: "your local player actor is this network id."</summary>
+    AssignLocalActor = 6,
 }
 
 /// <summary>Distinguishes spawn-message payloads on the wire.</summary>
@@ -18,4 +22,5 @@ public enum ActorKind : byte
 {
     Cube = 1,
     Marker = 2,
+    Player = 3,
 }

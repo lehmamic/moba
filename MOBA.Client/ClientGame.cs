@@ -102,37 +102,30 @@ public sealed class ClientGame : GameHost
         var world = new MobaWorld(map);
         world.Populate(Game.Scene);
 
-        // Build the local network sync system; we'll register the pre-spawned cube
-        // below so the server's position updates land on the right actor.
-        var transport = new RiptideClientTransport();
-        var syncSystem = new NetworkSyncSystem(Game.Scene, transport, _assets, markerMaterial);
-
-        TestCubeActor? cubeActor = null;
+        // Attach a renderer to the only pre-spawned actor (the ground). Player
+        // actors are spawned dynamically by NetworkSyncSystem when the server
+        // sends an ActorSpawn(Player) in reply to our JoinMessage.
         foreach (var actor in Game.Scene.Actors)
         {
-            switch (actor)
+            if (actor is GroundPlaneActor)
             {
-                case GroundPlaneActor:
-                    _ = new MeshRendererComponent(actor, groundMesh, groundMaterial);
-                    break;
-                case TestCubeActor cube:
-                    _ = new SkeletalMeshRendererComponent(cube, knight);
-                    _ = new NetworkIdentityComponent(cube, 2);
-                    _ = new LocalCubeInputComponent(cube, _cameraSwitcher, transport);
-                    cubeActor = cube;
-                    break;
+                _ = new MeshRendererComponent(actor, groundMesh, groundMaterial);
             }
         }
-        if (cubeActor is not null)
-        {
-            syncSystem.Register(2, cubeActor);
-        }
+
+        var transport = new RiptideClientTransport();
+        var syncSystem = new NetworkSyncSystem(
+            Game.Scene,
+            transport,
+            _assets,
+            markerMaterial,
+            knight,
+            _cameraSwitcher);
 
         // Order matters: transport before sync so MessageReceived events fire
-        // after polling, sync before camera so any spawn from the server is
-        // applied before render. The click-to-move handler lives on the cube
-        // actor (LocalCubeInputComponent) and runs via ProcessInput, not as a
-        // system.
+        // after polling. NetworkSyncSystem.OnInitialize sends the Join message
+        // — by then RiptideClientTransport's blocking OnInitialize has already
+        // confirmed the connection.
         AddSystem(_input);
         AddSystem(_assets);
         AddSystem(transport);
@@ -142,7 +135,7 @@ public sealed class ClientGame : GameHost
 
         _backend.Resize(_window.FramebufferSize.X, _window.FramebufferSize.Y);
 
-        Console.WriteLine("[MOBA.Client] Loaded. LMB = move cube, F1 = camera toggle, RMB+drag = look, WASD/QE = free-fly.");
+        Console.WriteLine("[MOBA.Client] Loaded. LMB = move player, F1 = camera toggle, RMB+drag = look, WASD/QE = free-fly.");
     }
 
     private void OnFramebufferResize(Vector2D<int> size)
