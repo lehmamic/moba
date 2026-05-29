@@ -12,9 +12,9 @@ All written artifacts in this repo are **English only**: source-code comments, X
 
 ## 2. Plans
 
-Plan-mode plans are initially written by the harness to `~/.claude/plans/`. **As soon as the plan is approved (or as the very first implementation action):** copy the plan content into the repo at `./.plans/YYYY-MM-DD-short-title.md`.
+Write plan-mode plans directly into the repo at `./.plans/YYYY-MM-DD-short-title.md` — do not use the harness default `~/.claude/plans/` location.
 
-- Format: `YYYY-MM-DD-short-title.md`. The date is the day the plan was approved.
+- Format: `YYYY-MM-DD-short-title.md`. The date is the day the plan was written.
 - Plans are **immutable** — a new iteration creates a new dated file alongside, the old one stays as history.
 - `.plans/` is **gitignored** (see `.gitignore`) — local-only working-copy history, not shared via the repo.
 
