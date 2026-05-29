@@ -23,11 +23,11 @@ public sealed class ServerGame : GameHost
         // MOBA.Game as an extension method so both server and client deserialise the
         // same JSON the same way.
         var assets = new AssetManager();
-        assets.AddMapCache();
+        var mapsRoot = AbsolutePath.AppBaseDirectory / "assets" / "maps";
+        assets.AddMapCache(mapsRoot);
         AddSystem(assets);
 
-        var mapPath = AbsolutePath.AppBaseDirectory / "assets" / "maps" / "default.json";
-        var map = Map.FromDefinition(assets.LoadMap(mapPath));
+        var map = Map.FromDefinition(assets.LoadMap("default.json"));
 
         var world = new MobaWorld(map);
         world.Populate(Game.Scene);

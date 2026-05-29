@@ -136,8 +136,8 @@ Both server and client use the **same** `AssetManager` (in `MOBA.Engine.Core`) �
 
 The typed caches and convenience load methods come from extension methods that live with the matching layer:
 
-- `MOBA.Engine.Graphics.AssetManagerExtensions` — `AddShaderCache(backend)` + `LoadShader(vert, frag)`, `AddTextureCache(backend)` + `LoadTexture(path)`. Used by the client only.
-- `MOBA.Game.AssetManagerExtensions` — `AddMapCache()` + `LoadMap(path)` (System.Text.Json over `MapDefinition`). Used by **both** server and client.
+- `MOBA.Engine.Graphics.AssetManagerExtensions` — `AddShaderCache(backend, shadersRoot)` + `LoadShader(name)` (the cache is the shader registry; files live at `{shadersRoot}/{name}.{vert,frag}`), `AddTextureCache(backend, texturesRoot)` + `LoadTexture(filename)`, `AddModelCache(backend, modelsRoot)` + `LoadModel(name)`. Every cache registers its root folder up front so callers reference assets by short name or filename, not by full path. Used by the client only.
+- `MOBA.Game.AssetManagerExtensions` — `AddMapCache(mapsRoot)` + `LoadMap(filename)` (System.Text.Json over `MapDefinition`). Used by **both** server and client.
 - `MOBA.Game.Client.AssetManagerExtensions` — `AddMeshCache(backend)` + `LoadCubeMesh()` / `LoadGroundMesh(w, l, t)`. One `AssetCache<string, IMesh>` covers every procedural mesh; the construction parameters are flattened into the key string (`cube`, `ground/150/150/2`, …). New mesh types extend the same key scheme. Disposal flows through the host lifecycle, replacing the ad-hoc mesh tracking list.
 
 `AssetCache<TKey, TAsset>` is the underlying primitive (lazy load, cache by key, dispose any `IDisposable` entries on shutdown). Future asset types (ability tables, champion stats, navmesh blobs) ship as new extension methods that add the cache and expose a typed `Load*` helper — no changes to `AssetManager` itself.

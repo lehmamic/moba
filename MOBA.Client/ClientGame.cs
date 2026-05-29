@@ -68,24 +68,23 @@ public sealed class ClientGame : GameHost
         var modelsRoot = assetsRoot / "models";
 
         _assets = new AssetManager();
-        _assets.AddShaderCache(_backend);
-        _assets.AddTextureCache(_backend);
+        _assets.AddShaderCache(_backend, shadersRoot);
+        _assets.AddTextureCache(_backend, texturesRoot);
         _assets.AddMeshCache(_backend);
-        _assets.AddModelCache(_backend, modelsRoot, shadersRoot);
-        _assets.AddMapCache();
+        _assets.AddModelCache(_backend, modelsRoot);
+        _assets.AddMapCache(mapsRoot);
 
         var aspectRatio = (float)_window.FramebufferSize.X / _window.FramebufferSize.Y;
         _cameraSwitcher = new CameraSwitcher(_input.Context, aspectRatio);
 
-        var shader = _assets.LoadShader(
-            shadersRoot / "phong_textured.vert",
-            shadersRoot / "phong_textured.frag");
-        var groundMaterial = new Material(shader, _assets.LoadTexture(texturesRoot / "grass.png"));
-        var markerMaterial = new Material(shader, _assets.LoadTexture(texturesRoot / "marker_magenta.png"));
+        var shader = _assets.LoadShader("phong_textured");
+        var groundMaterial = new Material(shader, _assets.LoadTexture("grass.png"));
+        var markerMaterial = new Material(shader, _assets.LoadTexture("marker_magenta.png"));
 
         // Player character: glTF model in bind pose (no skinning yet — that's a later
-        // iteration). Material's shader resolves through StandardShaders, default
-        // phong_textured. Multi-part assets walk knight.Parts directly.
+        // iteration). Material's shader resolves through the shader cache (default
+        // "phong_textured" unless the glTF material's extras.shader overrides).
+        // Multi-part assets walk knight.Parts directly.
         var knight = _assets.LoadModel("knight-garen");
 
         // Sun-like directional light from upper-front-right. Direction points *toward*
@@ -97,7 +96,7 @@ public sealed class ClientGame : GameHost
             SpecularStrength: 0.5f,
             Shininess: 32f);
 
-        var map = Map.FromDefinition(_assets.LoadMap(mapsRoot / "default.json"));
+        var map = Map.FromDefinition(_assets.LoadMap("default.json"));
         var groundMesh = _assets.LoadGroundMesh(map.Width, map.Length, worldUnitsPerTile: 2f);
 
         var world = new MobaWorld(map);

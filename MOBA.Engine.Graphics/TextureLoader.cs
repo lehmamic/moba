@@ -1,3 +1,4 @@
+using MOBA.Utilities;
 using StbImageSharp;
 
 namespace MOBA.Engine.Graphics;
@@ -20,7 +21,7 @@ public static class TextureLoader
     /// as in a viewer. PNG/JPG have a top-left origin; OpenGL textures have a bottom-left
     /// origin, so without flipping the texture appears mirrored.
     /// </param>
-    public static TextureData LoadRgba(string filePath, bool flipVertically = true)
+    public static TextureData LoadRgba(AbsolutePath filePath, bool flipVertically = true)
     {
         using var stream = File.OpenRead(filePath);
         return DecodeStream(stream, flipVertically);

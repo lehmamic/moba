@@ -83,6 +83,12 @@ public sealed class NetworkSyncSystem : IEngineSystem
         if (_actorsById.TryGetValue(message.Id, out var actor))
         {
             actor.Transform.Position = new Vector3D<float>(message.X, message.Y, message.Z);
+            // Derive yaw from the server's forward direction. Bind-pose forward is
+            // +X (Madhav convention, matches Tripo/Mixamo character exports), and
+            // Silk's Y-rotation sends (1,0,0) → (cos yaw, 0, -sin yaw) in row-vector
+            // form, so yaw = atan2(-forward.Z, forward.X).
+            var yaw = MathF.Atan2(-message.ForwardZ, message.ForwardX);
+            actor.Transform.Rotation = Quaternion<float>.CreateFromYawPitchRoll(yaw, 0f, 0f);
         }
     }
 

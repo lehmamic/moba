@@ -139,7 +139,16 @@ public sealed class MovementSystem : IEngineSystem, IPostUpdateSystem
     private void BroadcastPositionUpdate(Actor actor, uint id)
     {
         var position = actor.Transform.Position;
-        var message = new ActorPositionUpdateMessage(id, position.X, position.Y, position.Z);
+        // Send the gameplay-meaningful facing direction rather than a raw rotation
+        // angle. The XZ projection is enough because MOBA characters do not pitch.
+        var forward = actor.Transform.Forward;
+        var message = new ActorPositionUpdateMessage(
+            id,
+            position.X,
+            position.Y,
+            position.Z,
+            forward.X,
+            forward.Z);
         _transport.Send(NetChannel.Unreliable, message.Serialize());
     }
 

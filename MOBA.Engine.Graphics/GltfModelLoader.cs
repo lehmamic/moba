@@ -1,5 +1,6 @@
 using System.Text.Json.Nodes;
 using MOBA.Engine.Core;
+using MOBA.Utilities;
 using Silk.NET.Maths;
 using SharpGLTF.Schema2;
 
@@ -10,16 +11,17 @@ namespace MOBA.Engine.Graphics;
 /// <see cref="Model"/>. Each glTF mesh primitive becomes one <see cref="ModelPart"/>
 /// (mesh + material). The model is read in bind pose only — skeletal joints, skin
 /// weights, and animation channels are ignored (those land in later iterations).
-/// Materials reference a shader by key from <see cref="StandardShaders"/>; asset files
-/// are never allowed to ship their own GLSL.
+/// Materials reference a shader by short name via <see cref="AssetManager"/>'s shader
+/// cache; asset files are never allowed to ship their own GLSL.
 /// </summary>
 internal static class GltfModelLoader
 {
+    private const string DefaultShaderName = "phong_textured";
+
     public static Model Load(
-        string filePath,
+        AbsolutePath filePath,
         IGraphicsBackend backend,
-        AssetManager assets,
-        string shadersRoot)
+        AssetManager assets)
     {
         var modelRoot = ModelRoot.Load(filePath);
         var parts = new List<ModelPart>();
@@ -31,7 +33,7 @@ internal static class GltfModelLoader
                 var vertices = ExtractVertices(prim);
                 var indices = ExtractIndices(prim);
                 var glMesh = backend.CreateMesh(vertices, indices);
-                var material = BuildMaterial(prim.Material, backend, assets, shadersRoot);
+                var material = BuildMaterial(prim.Material, backend, assets);
                 parts.Add(new ModelPart(glMesh, material));
             }
         }
@@ -80,11 +82,10 @@ internal static class GltfModelLoader
     private static Material BuildMaterial(
         SharpGLTF.Schema2.Material? gltfMaterial,
         IGraphicsBackend backend,
-        AssetManager assets,
-        string shadersRoot)
+        AssetManager assets)
     {
         var shaderKey = ResolveShaderKey(gltfMaterial);
-        var shader = StandardShaders.Resolve(shaderKey, assets, shadersRoot);
+        var shader = assets.LoadShader(shaderKey);
         var texture = ExtractBaseColorTexture(gltfMaterial, backend);
         return new Material(shader, texture);
     }
@@ -98,7 +99,7 @@ internal static class GltfModelLoader
         {
             return key;
         }
-        return StandardShaders.PhongTextured;
+        return DefaultShaderName;
     }
 
     private static ITexture? ExtractBaseColorTexture(

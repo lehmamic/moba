@@ -1,54 +1,68 @@
 using MOBA.Engine.Core;
+using MOBA.Utilities;
 
 namespace MOBA.Engine.Graphics;
 
 /// <summary>
-/// Registers and reads GPU resources through a shared <see cref="AssetManager"/>:
-/// shaders keyed by the <c>(vertex, fragment)</c> path pair, textures keyed by file
-/// path. The loader lambdas keep all <c>IGraphicsBackend</c> knowledge local to
-/// this assembly — <see cref="AssetManager"/> itself stays graphics-agnostic.
+/// Registers and reads GPU resources through a shared <see cref="AssetManager"/>.
+/// Each cache is registered with the root folder it owns (<c>shadersRoot</c>,
+/// <c>texturesRoot</c>, <c>modelsRoot</c>) so callers reference assets by short
+/// name or filename, not by full path. Cache keys are plain <see cref="string"/>;
+/// public-API root paths are typed as <see cref="AbsolutePath"/>.
 /// </summary>
 public static class AssetManagerExtensions
 {
-    public static AssetCache<(string Vertex, string Fragment), IShader> AddShaderCache(
+    /// <summary>
+    /// Registers a shader cache keyed by short name. The on-disk pair lives at
+    /// <c>{shadersRoot}/{name}.vert</c> + <c>{name}.frag</c>. The cache itself is
+    /// the shader registry — unknown names fail at file-open time.
+    /// </summary>
+    public static AssetCache<string, IShader> AddShaderCache(
         this AssetManager assets,
-        IGraphicsBackend backend) =>
-        assets.AddCache<(string, string), IShader>(key =>
+        IGraphicsBackend backend,
+        AbsolutePath shadersRoot) =>
+        assets.AddCache<string, IShader>(name =>
             backend.CreateShader(
-                File.ReadAllText(key.Item1),
-                File.ReadAllText(key.Item2)));
+                File.ReadAllText(shadersRoot / $"{name}.vert"),
+                File.ReadAllText(shadersRoot / $"{name}.frag")));
 
+    /// <summary>
+    /// Registers a texture cache keyed by file name (including extension). Files
+    /// resolve to <c>{texturesRoot}/{filename}</c>. Same convention as the shader
+    /// and model caches: the registered root owns the lookup; callers only ever
+    /// see filenames.
+    /// </summary>
     public static AssetCache<string, ITexture> AddTextureCache(
         this AssetManager assets,
-        IGraphicsBackend backend) =>
-        assets.AddCache<string, ITexture>(path =>
+        IGraphicsBackend backend,
+        AbsolutePath texturesRoot) =>
+        assets.AddCache<string, ITexture>(filename =>
         {
-            var data = TextureLoader.LoadRgba(path);
+            var data = TextureLoader.LoadRgba(texturesRoot / filename);
             return backend.CreateTexture(data.Pixels, data.Width, data.Height);
         });
 
     /// <summary>
     /// Registers a model cache keyed by short name (e.g. <c>"knight-garen"</c>).
-    /// Files resolve to <c>{modelsRoot}/{name}.glb</c>. Materials use shader keys
-    /// resolved by <see cref="StandardShaders"/> against <paramref name="shadersRoot"/>.
+    /// Files resolve to <c>{modelsRoot}/{name}.glb</c>. The glTF loader reads the
+    /// per-material shader name from <c>material.extras.shader</c> and goes through
+    /// the shader cache; if absent it defaults to <c>"phong_textured"</c>.
     /// </summary>
     public static AssetCache<string, Model> AddModelCache(
         this AssetManager assets,
         IGraphicsBackend backend,
-        string modelsRoot,
-        string shadersRoot) =>
+        AbsolutePath modelsRoot) =>
         assets.AddCache<string, Model>(name =>
             GltfModelLoader.Load(
-                Path.Combine(modelsRoot, $"{name}.glb"),
+                modelsRoot / $"{name}.glb",
                 backend,
-                assets,
-                shadersRoot));
+                assets));
 
-    public static IShader LoadShader(this AssetManager assets, string vertexPath, string fragmentPath) =>
-        assets.Cache<(string, string), IShader>().GetOrLoad((vertexPath, fragmentPath));
+    public static IShader LoadShader(this AssetManager assets, string name) =>
+        assets.Cache<string, IShader>().GetOrLoad(name);
 
-    public static ITexture LoadTexture(this AssetManager assets, string path) =>
-        assets.Cache<string, ITexture>().GetOrLoad(path);
+    public static ITexture LoadTexture(this AssetManager assets, string filename) =>
+        assets.Cache<string, ITexture>().GetOrLoad(filename);
 
     public static Model LoadModel(this AssetManager assets, string name) =>
         assets.Cache<string, Model>().GetOrLoad(name);

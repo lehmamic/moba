@@ -46,5 +46,16 @@ public sealed class MoveTargetComponent : Component
 
         var step = Vector3D.Normalize(delta) * (Speed * time.DeltaSeconds);
         Owner.Transform.Position = step.Length >= distance ? target : position + step;
+
+        // Face the walk direction. The actor's bind-pose forward is +X (see
+        // Transform XML doc); we want a Y-axis rotation that takes +X to (dx, 0, dz).
+        // Silk's Y-rotation in row-vector form sends (1, 0, 0) → (cos yaw, 0, -sin yaw),
+        // so yaw = atan2(-deltaZ, deltaX). Y component of delta does not affect
+        // facing — characters don't pitch in a top-down MOBA.
+        if (delta.X != 0f || delta.Z != 0f)
+        {
+            var yaw = MathF.Atan2(-delta.Z, delta.X);
+            Owner.Transform.Rotation = Quaternion<float>.CreateFromYawPitchRoll(yaw, 0f, 0f);
+        }
     }
 }
