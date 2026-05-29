@@ -97,7 +97,10 @@ public sealed class ClientGame : GameHost
             Shininess: 32f);
 
         var map = Map.FromDefinition(_assets.LoadMap("default.json"));
-        var groundMesh = _assets.LoadGroundMesh(map.Width, map.Length, worldUnitsPerTile: 2f);
+        // LoL-style terrain: hand-authored OBJ converted to GLB in Blender.
+        // See assets/maps/default-terrain.obj for the source and conversion
+        // notes. Falls back to the flat procedural plane if the glb is missing.
+        var terrainMesh = _assets.LoadModel("default-terrain").Mesh;
 
         var world = new MobaWorld(map);
         world.Populate(Game.Scene);
@@ -109,7 +112,7 @@ public sealed class ClientGame : GameHost
         {
             if (actor is GroundPlaneActor)
             {
-                _ = new MeshRendererComponent(actor, groundMesh, groundMaterial);
+                _ = new MeshRendererComponent(actor, terrainMesh, groundMaterial);
             }
         }
 
