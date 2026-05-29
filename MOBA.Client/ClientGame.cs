@@ -116,7 +116,7 @@ public sealed class ClientGame : GameHost
                     _ = new MeshRendererComponent(actor, groundMesh, groundMaterial);
                     break;
                 case TestCubeActor cube:
-                    _ = new MeshRendererComponent(cube, knight.Mesh, knight.Material);
+                    _ = new SkeletalMeshRendererComponent(cube, knight);
                     _ = new NetworkIdentityComponent(cube, 2);
                     _ = new LocalCubeInputComponent(cube, _cameraSwitcher, transport);
                     cubeActor = cube;

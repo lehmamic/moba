@@ -26,7 +26,18 @@ public sealed class Renderer
         {
             foreach (var component in actor.Components)
             {
-                if (component is IRenderable renderable)
+                if (component is ISkinnedRenderable skinned)
+                {
+                    _backend.DrawSkinnedMesh(
+                        (ISkinnedMesh)skinned.Mesh,
+                        skinned.Material,
+                        actor.Transform.World,
+                        viewProjection,
+                        viewPosition,
+                        light,
+                        skinned.Palette);
+                }
+                else if (component is IRenderable renderable)
                 {
                     _backend.DrawMesh(
                         renderable.Mesh,

@@ -6,6 +6,8 @@ public interface IGraphicsBackend : IDisposable
 {
     IMesh CreateMesh(ReadOnlySpan<Vertex> vertices, ReadOnlySpan<uint> indices);
 
+    ISkinnedMesh CreateSkinnedMesh(ReadOnlySpan<SkinnedVertex> vertices, ReadOnlySpan<uint> indices);
+
     ITexture CreateTexture(ReadOnlySpan<byte> pixelsRgba, int width, int height);
 
     IShader CreateShader(string vertexSource, string fragmentSource);
@@ -21,6 +23,15 @@ public interface IGraphicsBackend : IDisposable
         Matrix4X4<float> viewProjection,
         Vector3D<float> viewPosition,
         DirectionalLight light);
+
+    void DrawSkinnedMesh(
+        ISkinnedMesh mesh,
+        Material material,
+        Matrix4X4<float> model,
+        Matrix4X4<float> viewProjection,
+        Vector3D<float> viewPosition,
+        DirectionalLight light,
+        MatrixPalette palette);
 
     void EndFrame();
 }

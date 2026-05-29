@@ -85,5 +85,24 @@ internal sealed class OpenGLShader : IShader
     public void SetUniform(string name, Vector3D<float> value) =>
         _gl.Uniform3(GetLocation(name), value.X, value.Y, value.Z);
 
+    public void SetUniform(string name, ReadOnlySpan<Matrix4X4<float>> values)
+    {
+        // Same row-vector → GLSL column-vector trick as the single-matrix overload
+        // (see ADR-002 / the comment on the single-Matrix4X4 overload above).
+        // We flatten the span ourselves rather than reinterpret-casting so the
+        // memory layout matches the per-matrix upload exactly.
+        var floats = new float[values.Length * 16];
+        for (var m = 0; m < values.Length; m++)
+        {
+            var v = values[m];
+            var b = m * 16;
+            floats[b + 0] = v.M11; floats[b + 1] = v.M12; floats[b + 2] = v.M13; floats[b + 3] = v.M14;
+            floats[b + 4] = v.M21; floats[b + 5] = v.M22; floats[b + 6] = v.M23; floats[b + 7] = v.M24;
+            floats[b + 8] = v.M31; floats[b + 9] = v.M32; floats[b + 10] = v.M33; floats[b + 11] = v.M34;
+            floats[b + 12] = v.M41; floats[b + 13] = v.M42; floats[b + 14] = v.M43; floats[b + 15] = v.M44;
+        }
+        _gl.UniformMatrix4(GetLocation(name), (uint)values.Length, false, floats.AsSpan());
+    }
+
     public void Dispose() => _gl.DeleteProgram(_program);
 }
