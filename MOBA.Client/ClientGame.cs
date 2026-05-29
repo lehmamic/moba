@@ -61,26 +61,32 @@ public sealed class ClientGame : GameHost
         _input = new InputSystem(_window.CreateInput());
         _renderer = new Renderer(_backend);
 
+        var assetsRoot = AbsolutePath.AppBaseDirectory / "assets";
+        var shadersRoot = assetsRoot / "shaders";
+        var texturesRoot = assetsRoot / "textures";
+        var mapsRoot = assetsRoot / "maps";
+        var modelsRoot = assetsRoot / "models";
+
         _assets = new AssetManager();
         _assets.AddShaderCache(_backend);
         _assets.AddTextureCache(_backend);
         _assets.AddMeshCache(_backend);
+        _assets.AddModelCache(_backend, modelsRoot, shadersRoot);
         _assets.AddMapCache();
 
         var aspectRatio = (float)_window.FramebufferSize.X / _window.FramebufferSize.Y;
         _cameraSwitcher = new CameraSwitcher(_input.Context, aspectRatio);
 
-        var assetsRoot = AbsolutePath.AppBaseDirectory / "assets";
-        var shadersRoot = assetsRoot / "shaders";
-        var texturesRoot = assetsRoot / "textures";
-        var mapsRoot = assetsRoot / "maps";
-
         var shader = _assets.LoadShader(
             shadersRoot / "phong_textured.vert",
             shadersRoot / "phong_textured.frag");
         var groundMaterial = new Material(shader, _assets.LoadTexture(texturesRoot / "grass.png"));
-        var cubeMaterial = new Material(shader, _assets.LoadTexture(texturesRoot / "dev_checker.png"));
         var markerMaterial = new Material(shader, _assets.LoadTexture(texturesRoot / "marker_magenta.png"));
+
+        // Player character: glTF model in bind pose (no skinning yet — that's a later
+        // iteration). Material's shader resolves through StandardShaders, default
+        // phong_textured. Multi-part assets walk knight.Parts directly.
+        var knight = _assets.LoadModel("knight-garen");
 
         // Sun-like directional light from upper-front-right. Direction points *toward*
         // the light source — see DirectionalLight XML doc.
@@ -93,7 +99,6 @@ public sealed class ClientGame : GameHost
 
         var map = Map.FromDefinition(_assets.LoadMap(mapsRoot / "default.json"));
         var groundMesh = _assets.LoadGroundMesh(map.Width, map.Length, worldUnitsPerTile: 2f);
-        var cubeMesh = _assets.LoadCubeMesh();
 
         var world = new MobaWorld(map);
         world.Populate(Game.Scene);
@@ -112,7 +117,7 @@ public sealed class ClientGame : GameHost
                     _ = new MeshRendererComponent(actor, groundMesh, groundMaterial);
                     break;
                 case TestCubeActor cube:
-                    _ = new MeshRendererComponent(cube, cubeMesh, cubeMaterial);
+                    _ = new MeshRendererComponent(cube, knight.Mesh, knight.Material);
                     _ = new NetworkIdentityComponent(cube, 2);
                     _ = new LocalCubeInputComponent(cube, _cameraSwitcher, transport);
                     cubeActor = cube;

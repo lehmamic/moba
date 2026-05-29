@@ -20,6 +20,10 @@
         <PackageVersion Include="StbImageSharp" Version="2.30.15" />
     </ItemGroup>
 
+    <ItemGroup Label="glTF model loading">
+        <PackageVersion Include="SharpGLTF.Core" Version="1.0.6" />
+    </ItemGroup>
+
     <ItemGroup Label="Networking (Riptide UDP)">
         <PackageVersion Include="RiptideNetworking.Riptide" Version="2.2.1" />
     </ItemGroup>

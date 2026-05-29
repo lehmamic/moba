@@ -18,6 +18,7 @@ public static class MobaArchitecture
     public static readonly Assembly EngineNetworkingAssembly = Assembly.Load("MOBA.Engine.Networking");
     public static readonly Assembly EngineNetworkingRiptideAssembly = Assembly.Load("MOBA.Engine.Networking.Riptide");
     public static readonly Assembly RiptideAssembly = Assembly.Load("RiptideNetworking");
+    public static readonly Assembly SharpGltfAssembly = Assembly.Load("SharpGLTF.Core");
     public static readonly Assembly GameAssembly = Assembly.Load("MOBA.Game");
     public static readonly Assembly GameClientAssembly = Assembly.Load("MOBA.Game.Client");
     public static readonly Assembly ServerAssembly = Assembly.Load("MOBA.Server");
@@ -38,6 +39,7 @@ public static class MobaArchitecture
             EngineNetworkingAssembly,
             EngineNetworkingRiptideAssembly,
             RiptideAssembly,
+            SharpGltfAssembly,
             GameAssembly,
             GameClientAssembly,
             ServerAssembly,

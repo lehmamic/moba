@@ -27,9 +27,29 @@ public static class AssetManagerExtensions
             return backend.CreateTexture(data.Pixels, data.Width, data.Height);
         });
 
+    /// <summary>
+    /// Registers a model cache keyed by short name (e.g. <c>"knight-garen"</c>).
+    /// Files resolve to <c>{modelsRoot}/{name}.glb</c>. Materials use shader keys
+    /// resolved by <see cref="StandardShaders"/> against <paramref name="shadersRoot"/>.
+    /// </summary>
+    public static AssetCache<string, Model> AddModelCache(
+        this AssetManager assets,
+        IGraphicsBackend backend,
+        string modelsRoot,
+        string shadersRoot) =>
+        assets.AddCache<string, Model>(name =>
+            GltfModelLoader.Load(
+                Path.Combine(modelsRoot, $"{name}.glb"),
+                backend,
+                assets,
+                shadersRoot));
+
     public static IShader LoadShader(this AssetManager assets, string vertexPath, string fragmentPath) =>
         assets.Cache<(string, string), IShader>().GetOrLoad((vertexPath, fragmentPath));
 
     public static ITexture LoadTexture(this AssetManager assets, string path) =>
         assets.Cache<string, ITexture>().GetOrLoad(path);
+
+    public static Model LoadModel(this AssetManager assets, string name) =>
+        assets.Cache<string, Model>().GetOrLoad(name);
 }

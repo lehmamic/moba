@@ -16,6 +16,7 @@ ADRs are immutable once accepted — never edit the Context, Decision, or Conseq
 - [ADR-010: One match per server process](adr-010-one-match-per-process.md)
 - [ADR-011: Riptide concrete transport lives in a sibling project](adr-011-riptide-transport-sibling-project.md)
 - [ADR-012: Classical Phong lighting with one directional light and Vertex-with-Normal layout](adr-012-phong-lighting-vertex-normals.md)
+- [ADR-013: glTF 2.0 (.glb) as the model format, via SharpGLTF, with a project-owned shader registry](adr-013-gltf-model-format.md)
 
 ## Adding an ADR
 

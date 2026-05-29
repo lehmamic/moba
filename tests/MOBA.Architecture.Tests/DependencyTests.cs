@@ -329,4 +329,14 @@ public class DependencyTests
             .Because("ADR-004: the server runs headless on machines without a GPU.")
             .Check(Instance);
     }
+
+    [Fact]
+    public void Server_does_not_depend_on_SharpGLTF()
+    {
+        Types().That().ResideInAssembly(ServerAssembly)
+            .Should().NotDependOnAny(
+                Types().That().ResideInAssembly(SharpGltfAssembly))
+            .Because("ADR-013: model loading is a client-only concern; the headless server build must not link a glTF loader.")
+            .Check(Instance);
+    }
 }

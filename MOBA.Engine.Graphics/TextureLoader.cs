@@ -23,6 +23,21 @@ public static class TextureLoader
     public static TextureData LoadRgba(string filePath, bool flipVertically = true)
     {
         using var stream = File.OpenRead(filePath);
+        return DecodeStream(stream, flipVertically);
+    }
+
+    /// <summary>
+    /// Decodes an in-memory image (PNG, JPG, …) such as one embedded in a glTF binary,
+    /// returning RGBA8 pixel data.
+    /// </summary>
+    public static TextureData LoadRgba(ReadOnlySpan<byte> encoded, bool flipVertically = true)
+    {
+        using var stream = new MemoryStream(encoded.ToArray(), writable: false);
+        return DecodeStream(stream, flipVertically);
+    }
+
+    private static TextureData DecodeStream(Stream stream, bool flipVertically)
+    {
         var image = ImageResult.FromStream(stream, ColorComponents.RedGreenBlueAlpha);
 
         var pixels = image.Data;
