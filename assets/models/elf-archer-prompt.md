@@ -1,0 +1,7 @@
+Vitruvian Man T-pose: arms perfectly horizontal at shoulder height, palms facing downward toward the floor, fingers held flat together, legs straight and slightly apart, hands empty. A heroic female elf ice archer in elven-style icy leather armor. Stylized chunky chibi proportions, big head, simplified cartoon mitten hands with four fingers and a thumb pressed flat together, closed neutral mouth. Cell-shaded cartoon look inspired by Brawl Stars and League of Legends' Ashe. Clean low-poly stylized topology, symmetric pose, single base-color texture atlas. No weapon, no sword, no shield, no extra fingers, no polydactyly, no bent arms, no A-pose, no twisted spine, no multiple materials, no separate texture per body part.
+
+---
+
+Reference (knight prompt from MODEL_PROMPT.md §4a):
+
+Vitruvian Man T-pose: arms perfectly horizontal at shoulder height, palms facing downward toward the floor, fingers held flat together, legs straight and slightly apart, hands empty. A heroic young fantasy knight in polished silver-and-gold plate armor with a flowing crimson cape. Stylized chunky chibi proportions, big head, simplified cartoon mitten hands with four fingers and a thumb pressed flat together, closed neutral mouth. Cell-shaded cartoon look inspired by Brawl Stars and League of Legends' Garen. Clean low-poly stylized topology, symmetric pose, single base-color texture atlas. No weapon, no sword, no shield, no extra fingers, no polydactyly, no bent arms, no A-pose, no twisted spine, no multiple materials, no separate texture per body part.
