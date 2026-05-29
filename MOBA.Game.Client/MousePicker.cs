@@ -33,22 +33,23 @@ public static class MousePicker
         var nearWorld = UnprojectThroughW(new Vector4D<float>(ndcX, ndcY, -1f, 1f), inverseViewProj);
         var farWorld = UnprojectThroughW(new Vector4D<float>(ndcX, ndcY, 1f, 1f), inverseViewProj);
 
-        var rayOrigin = new Vector3D<float>(nearWorld.X, nearWorld.Y, nearWorld.Z);
-        var rayDir = Vector3D.Normalize(
-            new Vector3D<float>(farWorld.X, farWorld.Y, farWorld.Z) - rayOrigin);
+        var origin = new Vector3D<float>(nearWorld.X, nearWorld.Y, nearWorld.Z);
+        var direction = Vector3D.Normalize(
+            new Vector3D<float>(farWorld.X, farWorld.Y, farWorld.Z) - origin);
+        var ray = new Ray3D<float>(origin, direction);
 
-        if (MathF.Abs(rayDir.Y) < 1e-6f)
+        if (MathF.Abs(ray.Direction.Y) < 1e-6f)
         {
             return null;
         }
 
-        var t = -rayOrigin.Y / rayDir.Y;
+        var t = -ray.Origin.Y / ray.Direction.Y;
         if (t < 0f)
         {
             return null;
         }
 
-        var hit = rayOrigin + (rayDir * t);
+        var hit = ray.GetPoint(t);
         return new Vector3D<float>(hit.X, 0f, hit.Z);
     }
 
