@@ -14,7 +14,13 @@ public interface IGraphicsBackend : IDisposable
 
     void BeginFrame(float clearR, float clearG, float clearB);
 
-    void DrawMesh(IMesh mesh, Material material, Matrix4X4<float> modelViewProjection);
+    void DrawMesh(
+        IMesh mesh,
+        Material material,
+        Matrix4X4<float> model,
+        Matrix4X4<float> viewProjection,
+        Vector3D<float> viewPosition,
+        DirectionalLight light);
 
     void EndFrame();
 }

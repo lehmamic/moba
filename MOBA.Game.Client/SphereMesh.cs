@@ -29,16 +29,21 @@ public static class SphereMesh
                 var sinPhi = MathF.Sin(phi);
                 var cosPhi = MathF.Cos(phi);
 
-                var x = radius * sinTheta * cosPhi;
-                var y = radius * cosTheta;
-                var z = radius * sinTheta * sinPhi;
+                var nx = sinTheta * cosPhi;
+                var ny = cosTheta;
+                var nz = sinTheta * sinPhi;
+
+                var x = radius * nx;
+                var y = radius * ny;
+                var z = radius * nz;
 
                 var u = (float)lon / lonSegments;
                 var v = (float)lat / latSegments;
 
                 vertices[(lat * ringSize) + lon] = new Vertex(
                     new Vector3D<float>(x, y, z),
-                    new Vector2D<float>(u, v));
+                    new Vector2D<float>(u, v),
+                    new Vector3D<float>(nx, ny, nz));
             }
         }
 

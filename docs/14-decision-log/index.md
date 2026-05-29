@@ -15,6 +15,7 @@ ADRs are immutable once accepted — never edit the Context, Decision, or Conseq
 - [ADR-009: GameHost shared between client and server](adr-009-gamehost-shared-abstraction.md)
 - [ADR-010: One match per server process](adr-010-one-match-per-process.md)
 - [ADR-011: Riptide concrete transport lives in a sibling project](adr-011-riptide-transport-sibling-project.md)
+- [ADR-012: Classical Phong lighting with one directional light and Vertex-with-Normal layout](adr-012-phong-lighting-vertex-normals.md)
 
 ## Adding an ADR
 

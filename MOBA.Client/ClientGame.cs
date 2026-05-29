@@ -28,6 +28,7 @@ public sealed class ClientGame : GameHost
     private AssetManager? _assets;
     private Renderer? _renderer;
     private CameraSwitcher? _cameraSwitcher;
+    private DirectionalLight _light;
 
     public ClientGame()
     {
@@ -75,11 +76,20 @@ public sealed class ClientGame : GameHost
         var mapsRoot = assetsRoot / "maps";
 
         var shader = _assets.LoadShader(
-            shadersRoot / "unlit_textured.vert",
-            shadersRoot / "unlit_textured.frag");
+            shadersRoot / "phong_textured.vert",
+            shadersRoot / "phong_textured.frag");
         var groundMaterial = new Material(shader, _assets.LoadTexture(texturesRoot / "grass.png"));
         var cubeMaterial = new Material(shader, _assets.LoadTexture(texturesRoot / "dev_checker.png"));
         var markerMaterial = new Material(shader, _assets.LoadTexture(texturesRoot / "marker_magenta.png"));
+
+        // Sun-like directional light from upper-front-right. Direction points *toward*
+        // the light source — see DirectionalLight XML doc.
+        _light = new DirectionalLight(
+            Direction: Vector3D.Normalize(new Vector3D<float>(0.3f, 1.0f, 0.4f)),
+            Color: new Vector3D<float>(1.0f, 0.95f, 0.9f),
+            AmbientColor: new Vector3D<float>(0.2f, 0.22f, 0.28f),
+            SpecularStrength: 0.5f,
+            Shininess: 32f);
 
         var map = Map.FromDefinition(_assets.LoadMap(mapsRoot / "default.json"));
         var groundMesh = _assets.LoadGroundMesh(map.Width, map.Length, worldUnitsPerTile: 2f);
@@ -155,7 +165,7 @@ public sealed class ClientGame : GameHost
         {
             return;
         }
-        _renderer.RenderFrame(Game.Scene, _cameraSwitcher.ActiveCamera);
+        _renderer.RenderFrame(Game.Scene, _cameraSwitcher.ActiveCamera, _light);
     }
 
     private void OnClosing()

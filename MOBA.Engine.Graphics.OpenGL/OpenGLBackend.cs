@@ -35,13 +35,29 @@ public sealed class OpenGLBackend : IGraphicsBackend
         _gl.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
     }
 
-    public void DrawMesh(IMesh mesh, Material material, Matrix4X4<float> modelViewProjection)
+    public void DrawMesh(
+        IMesh mesh,
+        Material material,
+        Matrix4X4<float> model,
+        Matrix4X4<float> viewProjection,
+        Vector3D<float> viewPosition,
+        DirectionalLight light)
     {
         var glMesh = (OpenGLMesh)mesh;
         var glShader = (OpenGLShader)material.Shader;
 
         glShader.Use();
-        glShader.SetUniform("u_mvp", modelViewProjection);
+        // Row-vector convention: clip = model * viewProjection * vertex^T (see ADR-002).
+        glShader.SetUniform("u_mvp", model * viewProjection);
+        glShader.SetUniform("u_model", model);
+        glShader.SetUniform("u_viewPos", viewPosition);
+        glShader.SetUniform("u_lightDir", light.Direction);
+        glShader.SetUniform("u_lightColor", light.Color);
+        glShader.SetUniform("u_ambientColor", light.AmbientColor);
+        glShader.SetUniform("u_specularStrength", light.SpecularStrength);
+        glShader.SetUniform("u_shininess", light.Shininess);
+        // Uniforms absent from the bound shader resolve to -1 and are silently
+        // ignored, so unlit shaders are safe to keep in the mix.
 
         if (material.Texture is OpenGLTexture glTexture)
         {

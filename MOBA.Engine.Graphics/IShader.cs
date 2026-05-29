@@ -10,5 +10,7 @@ public interface IShader : IDisposable
 
     void SetUniform(string name, int value);
 
+    void SetUniform(string name, float value);
+
     void SetUniform(string name, Vector3D<float> value);
 }

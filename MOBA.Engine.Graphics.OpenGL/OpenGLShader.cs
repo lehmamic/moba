@@ -80,6 +80,8 @@ internal sealed class OpenGLShader : IShader
 
     public void SetUniform(string name, int value) => _gl.Uniform1(GetLocation(name), value);
 
+    public void SetUniform(string name, float value) => _gl.Uniform1(GetLocation(name), value);
+
     public void SetUniform(string name, Vector3D<float> value) =>
         _gl.Uniform3(GetLocation(name), value.X, value.Y, value.Z);
 

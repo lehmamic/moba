@@ -17,17 +17,24 @@ public sealed class Renderer
 
     public (float R, float G, float B) ClearColor { get; set; } = (0.1f, 0.15f, 0.2f);
 
-    public void RenderFrame(Scene scene, Camera camera)
+    public void RenderFrame(Scene scene, Camera camera, DirectionalLight light)
     {
         _backend.BeginFrame(ClearColor.R, ClearColor.G, ClearColor.B);
         var viewProjection = camera.ViewProjection;
+        var viewPosition = camera.Position;
         foreach (var actor in scene.Actors)
         {
             foreach (var component in actor.Components)
             {
                 if (component is IRenderable renderable)
                 {
-                    _backend.DrawMesh(renderable.Mesh, renderable.Material, actor.Transform.World * viewProjection);
+                    _backend.DrawMesh(
+                        renderable.Mesh,
+                        renderable.Material,
+                        actor.Transform.World,
+                        viewProjection,
+                        viewPosition,
+                        light);
                 }
             }
         }

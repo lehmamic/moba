@@ -4,54 +4,61 @@ using Silk.NET.Maths;
 namespace MOBA.Game.Client;
 
 /// <summary>
-/// Unit cube (extent ±0.5, side length 1). 24 vertices (4 per face for clean UVs),
-/// 36 indices. CCW winding when viewed from outside — matches RH Y-up convention with
-/// front face = CCW.
+/// Unit cube (extent ±0.5, side length 1). 24 vertices (4 per face for clean UVs
+/// and per-face flat normals), 36 indices. CCW winding when viewed from outside —
+/// matches RH Y-up convention with front face = CCW.
 /// </summary>
 public static class CubeMesh
 {
     public static IMesh CreateUnitCube(IGraphicsBackend backend)
     {
-        Vertex V(float x, float y, float z, float u, float v) =>
-            new(new Vector3D<float>(x, y, z), new Vector2D<float>(u, v));
+        Vertex V(float x, float y, float z, float u, float v, Vector3D<float> n) =>
+            new(new Vector3D<float>(x, y, z), new Vector2D<float>(u, v), n);
+
+        var posX = new Vector3D<float>(+1f, 0f, 0f);
+        var negX = new Vector3D<float>(-1f, 0f, 0f);
+        var posY = new Vector3D<float>(0f, +1f, 0f);
+        var negY = new Vector3D<float>(0f, -1f, 0f);
+        var posZ = new Vector3D<float>(0f, 0f, +1f);
+        var negZ = new Vector3D<float>(0f, 0f, -1f);
 
         var vertices = new Vertex[]
         {
             // +X face (outward normal +X)
-            V(+0.5f, -0.5f, -0.5f, 0f, 0f),
-            V(+0.5f, +0.5f, -0.5f, 1f, 0f),
-            V(+0.5f, +0.5f, +0.5f, 1f, 1f),
-            V(+0.5f, -0.5f, +0.5f, 0f, 1f),
+            V(+0.5f, -0.5f, -0.5f, 0f, 0f, posX),
+            V(+0.5f, +0.5f, -0.5f, 1f, 0f, posX),
+            V(+0.5f, +0.5f, +0.5f, 1f, 1f, posX),
+            V(+0.5f, -0.5f, +0.5f, 0f, 1f, posX),
 
             // -X face (outward normal -X)
-            V(-0.5f, -0.5f, +0.5f, 0f, 0f),
-            V(-0.5f, +0.5f, +0.5f, 1f, 0f),
-            V(-0.5f, +0.5f, -0.5f, 1f, 1f),
-            V(-0.5f, -0.5f, -0.5f, 0f, 1f),
+            V(-0.5f, -0.5f, +0.5f, 0f, 0f, negX),
+            V(-0.5f, +0.5f, +0.5f, 1f, 0f, negX),
+            V(-0.5f, +0.5f, -0.5f, 1f, 1f, negX),
+            V(-0.5f, -0.5f, -0.5f, 0f, 1f, negX),
 
             // +Y face (top, outward normal +Y)
-            V(-0.5f, +0.5f, -0.5f, 0f, 0f),
-            V(-0.5f, +0.5f, +0.5f, 1f, 0f),
-            V(+0.5f, +0.5f, +0.5f, 1f, 1f),
-            V(+0.5f, +0.5f, -0.5f, 0f, 1f),
+            V(-0.5f, +0.5f, -0.5f, 0f, 0f, posY),
+            V(-0.5f, +0.5f, +0.5f, 1f, 0f, posY),
+            V(+0.5f, +0.5f, +0.5f, 1f, 1f, posY),
+            V(+0.5f, +0.5f, -0.5f, 0f, 1f, posY),
 
             // -Y face (bottom, outward normal -Y)
-            V(+0.5f, -0.5f, -0.5f, 0f, 0f),
-            V(+0.5f, -0.5f, +0.5f, 1f, 0f),
-            V(-0.5f, -0.5f, +0.5f, 1f, 1f),
-            V(-0.5f, -0.5f, -0.5f, 0f, 1f),
+            V(+0.5f, -0.5f, -0.5f, 0f, 0f, negY),
+            V(+0.5f, -0.5f, +0.5f, 1f, 0f, negY),
+            V(-0.5f, -0.5f, +0.5f, 1f, 1f, negY),
+            V(-0.5f, -0.5f, -0.5f, 0f, 1f, negY),
 
             // +Z face (outward normal +Z)
-            V(-0.5f, -0.5f, +0.5f, 0f, 0f),
-            V(+0.5f, -0.5f, +0.5f, 1f, 0f),
-            V(+0.5f, +0.5f, +0.5f, 1f, 1f),
-            V(-0.5f, +0.5f, +0.5f, 0f, 1f),
+            V(-0.5f, -0.5f, +0.5f, 0f, 0f, posZ),
+            V(+0.5f, -0.5f, +0.5f, 1f, 0f, posZ),
+            V(+0.5f, +0.5f, +0.5f, 1f, 1f, posZ),
+            V(-0.5f, +0.5f, +0.5f, 0f, 1f, posZ),
 
             // -Z face (outward normal -Z)
-            V(-0.5f, +0.5f, -0.5f, 0f, 0f),
-            V(+0.5f, +0.5f, -0.5f, 1f, 0f),
-            V(+0.5f, -0.5f, -0.5f, 1f, 1f),
-            V(-0.5f, -0.5f, -0.5f, 0f, 1f),
+            V(-0.5f, +0.5f, -0.5f, 0f, 0f, negZ),
+            V(+0.5f, +0.5f, -0.5f, 1f, 0f, negZ),
+            V(+0.5f, -0.5f, -0.5f, 1f, 1f, negZ),
+            V(-0.5f, -0.5f, -0.5f, 0f, 1f, negZ),
         };
 
         var indices = new uint[6 * 6];

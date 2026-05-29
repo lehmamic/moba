@@ -30,12 +30,16 @@ internal sealed class OpenGLMesh : IMesh
         const uint stride = Vertex.SizeInBytes;
         const nint positionOffset = 0;
         const nint uvOffset = 3 * sizeof(float);
+        const nint normalOffset = 5 * sizeof(float);
 
         _gl.EnableVertexAttribArray(0);
         _gl.VertexAttribPointer(0, 3, VertexAttribPointerType.Float, false, stride, positionOffset);
 
         _gl.EnableVertexAttribArray(1);
         _gl.VertexAttribPointer(1, 2, VertexAttribPointerType.Float, false, stride, uvOffset);
+
+        _gl.EnableVertexAttribArray(2);
+        _gl.VertexAttribPointer(2, 3, VertexAttribPointerType.Float, false, stride, normalOffset);
 
         _gl.BindBuffer(BufferTargetARB.ArrayBuffer, 0);
         _gl.BindVertexArray(0);

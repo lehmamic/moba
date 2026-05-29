@@ -56,12 +56,16 @@ See [ADR-005](../14-decision-log/adr-005-project-structure.md) and [ADR-008](../
 
 ## Graphics backend abstraction
 
-Game code only talks to abstractions: `IGraphicsBackend`, `IMesh`, `ITexture`, `IShader`, `Material`, `Camera`, `Vertex`.
+Game code only talks to abstractions: `IGraphicsBackend`, `IMesh`, `ITexture`, `IShader`, `Material`, `Camera`, `Vertex`, `DirectionalLight`.
 
 - The OpenGL backend lives in the sibling project `MOBA.Engine.Graphics.OpenGL`; the abstraction project does not reference `Silk.NET.OpenGL` ([ADR-008](../14-decision-log/adr-008-opengl-backend-sibling-project.md)).
 - A Vulkan backend will arrive as `MOBA.Engine.Graphics.Vulkan` alongside it.
 - **Vulkan patch (later):** Y-flip in clip space (negative viewport height or `M22 *= -1` in the projection) + Z-range remap [−1, +1] → [0, +1]. World/view matrices stay RH Y-up.
 - GLSL shaders live under `assets/shaders/` and are loaded from file (`File.ReadAllText`) at startup. Textures live under `assets/textures/` and are loaded via `MOBA.Engine.Graphics.TextureLoader` (StbImageSharp; PNG/JPG/TGA/BMP, RGBA8, vertical flip on load to match OpenGL's bottom-left texture origin). Hot-reload (re-read on file change) is a later step.
+
+### Lighting pipeline
+
+`Vertex` carries Position + UV + Normal (32 bytes). Every mesh — procedural or imported — supplies per-vertex normals. The renderer takes a `DirectionalLight` per frame (`Renderer.RenderFrame(scene, camera, light)`) and passes it through `IGraphicsBackend.DrawMesh(mesh, material, model, viewProjection, viewPosition, light)`. The backend sets the per-draw Phong uniforms (`u_model`, `u_mvp`, `u_viewPos`, `u_lightDir`, `u_lightColor`, `u_ambientColor`, `u_specularStrength`, `u_shininess`); unknown-uniform locations resolve to -1 and are silently ignored, so unlit shaders are safe to keep in the mix. The active baseline shader is `phong_textured` (classical Phong, single directional light) — see [ADR-012](../14-decision-log/adr-012-phong-lighting-vertex-normals.md).
 
 See [ADR-003](../14-decision-log/adr-003-graphics-backend-abstraction.md).
 

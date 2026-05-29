@@ -16,12 +16,13 @@ public static class GroundMesh
         var uMax = width / worldUnitsPerTile;
         var vMax = length / worldUnitsPerTile;
 
+        var up = Vector3D<float>.UnitY;
         var vertices = new Vertex[]
         {
-            new(new Vector3D<float>(-hw, 0f, -hl), new Vector2D<float>(0f,   0f)),
-            new(new Vector3D<float>(-hw, 0f, +hl), new Vector2D<float>(0f,   vMax)),
-            new(new Vector3D<float>(+hw, 0f, +hl), new Vector2D<float>(uMax, vMax)),
-            new(new Vector3D<float>(+hw, 0f, -hl), new Vector2D<float>(uMax, 0f)),
+            new(new Vector3D<float>(-hw, 0f, -hl), new Vector2D<float>(0f,   0f),   up),
+            new(new Vector3D<float>(-hw, 0f, +hl), new Vector2D<float>(0f,   vMax), up),
+            new(new Vector3D<float>(+hw, 0f, +hl), new Vector2D<float>(uMax, vMax), up),
+            new(new Vector3D<float>(+hw, 0f, -hl), new Vector2D<float>(uMax, 0f),   up),
         };
 
         var indices = new uint[] { 0, 1, 2, 0, 2, 3 };
