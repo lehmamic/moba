@@ -131,6 +131,10 @@ public sealed class NetworkSyncSystem : IEngineSystem
             return;
         }
         var player = new PlayerActor(new Vector3D<float>(message.X, message.Y, message.Z));
+        // Player visual scale relative to the dimension-rift map. The knight model
+        // is ~2 units tall at source — boost so it reads at MOBA-champion proportions
+        // against the textured Sketchfab terrain. Tune until camera/character feel right.
+        player.Transform.Scale = Vector3D<float>.One * 3f;
         _ = new NetworkIdentityComponent(player, message.Id);
         _ = new SkeletalMeshRendererComponent(player, _playerModel);
         if (_localPlayerNetworkId == message.Id)

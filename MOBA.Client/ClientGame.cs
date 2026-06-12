@@ -65,27 +65,25 @@ public sealed class ClientGame : GameHost
         var shadersRoot = assetsRoot / "shaders";
         var texturesRoot = assetsRoot / "textures";
         var mapsRoot = assetsRoot / "maps";
-        var modelsRoot = assetsRoot / "models";
 
         _assets = new AssetManager();
         _assets.AddShaderCache(_backend, shadersRoot);
         _assets.AddTextureCache(_backend, texturesRoot);
         _assets.AddMeshCache(_backend);
-        _assets.AddModelCache(_backend, modelsRoot);
+        _assets.AddModelCache(_backend, assetsRoot);
         _assets.AddMapCache(mapsRoot);
 
         var aspectRatio = (float)_window.FramebufferSize.X / _window.FramebufferSize.Y;
         _cameraSwitcher = new CameraSwitcher(_input.Context, aspectRatio);
 
         var shader = _assets.LoadShader("phong_textured");
-        var groundMaterial = new Material(shader, _assets.LoadTexture("grass.png"));
         var markerMaterial = new Material(shader, _assets.LoadTexture("marker_magenta.png"));
 
         // Player character: glTF model in bind pose (no skinning yet — that's a later
         // iteration). Material's shader resolves through the shader cache (default
         // "phong_textured" unless the glTF material's extras.shader overrides).
         // Multi-part assets walk knight.Parts directly.
-        var knight = _assets.LoadModel("knight-garen");
+        var knight = _assets.LoadModel("models/knight-garen");
 
         // Sun-like directional light from upper-front-right. Direction points *toward*
         // the light source — see DirectionalLight XML doc.
@@ -96,23 +94,33 @@ public sealed class ClientGame : GameHost
             SpecularStrength: 0.5f,
             Shininess: 32f);
 
-        var map = Map.FromDefinition(_assets.LoadMap("default.json"));
-        // LoL-style terrain: hand-authored OBJ converted to GLB in Blender.
-        // See assets/maps/default-terrain.obj for the source and conversion
-        // notes. Falls back to the flat procedural plane if the glb is missing.
-        var terrainMesh = _assets.LoadModel("default-terrain").Mesh;
+        var map = Map.FromDefinition(_assets.LoadMap("dimension-rift.json"));
+        var terrainModel = _assets.LoadModel($"maps/{map.TerrainMesh}");
 
         var world = new MobaWorld(map);
         world.Populate(Game.Scene);
 
-        // Attach a renderer to the only pre-spawned actor (the ground). Player
-        // actors are spawned dynamically by NetworkSyncSystem when the server
-        // sends an ActorSpawn(Player) in reply to our JoinMessage.
+        // Attach renderers to the pre-spawned static actors: the ground plus
+        // every building / monster the map definition placed. Player actors are
+        // spawned dynamically by NetworkSyncSystem when the server sends an
+        // ActorSpawn(Player) in reply to our JoinMessage.
         foreach (var actor in Game.Scene.Actors)
         {
-            if (actor is GroundPlaneActor)
+            switch (actor)
             {
-                _ = new MeshRendererComponent(actor, terrainMesh, groundMaterial);
+                case GroundPlaneActor:
+                    // GLB is pre-scaled in Blender to 150-unit playable footprint and
+                    // the loader bakes per-node world transforms into vertex positions,
+                    // so the actor renders the map at its authored game-coord size.
+                    actor.Transform.Scale = Vector3D<float>.One;
+                    _ = new MeshRendererComponent(actor, terrainModel);
+                    break;
+                case BuildingActor building:
+                    _ = new MeshRendererComponent(building, _assets.LoadModel(building.Definition.MeshAsset));
+                    break;
+                case MonsterActor monster:
+                    _ = new MeshRendererComponent(monster, _assets.LoadModel(monster.Definition.MeshAsset));
+                    break;
             }
         }
 

@@ -27,7 +27,7 @@ public sealed class ServerGame : GameHost
         assets.AddMapCache(mapsRoot);
         AddSystem(assets);
 
-        var map = Map.FromDefinition(assets.LoadMap("default.json"));
+        var map = Map.FromDefinition(assets.LoadMap("dimension-rift.json"));
 
         var world = new MobaWorld(map);
         world.Populate(Game.Scene);
