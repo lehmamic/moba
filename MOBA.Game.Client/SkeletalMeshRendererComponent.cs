@@ -50,14 +50,13 @@ public sealed class SkeletalMeshRendererComponent : Component, ISkinnedRenderabl
                 "Skeletal model needs at least two animation clips (idle + walk).",
                 nameof(model));
         }
-        if (model.Mesh is not ISkinnedMesh)
-        {
-            throw new ArgumentException("Model's mesh is not skinned.", nameof(model));
-        }
 
+        // Parts may mix skinned and static primitives (e.g. a weapon part not
+        // bound to bones). The renderer's pass split filters per-part: skinned
+        // parts go through pass 2 with this component's palette, static ones
+        // fall through to pass 1 as plain draws.
         _model = model;
-        Mesh = model.Mesh;
-        Material = model.Material;
+        Parts = model.Parts;
         Palette = new MatrixPalette();
 
         // Pick idle = longest, locomotion = shortest non-idle. Tripo / Mixamo exports
@@ -69,9 +68,7 @@ public sealed class SkeletalMeshRendererComponent : Component, ISkinnedRenderabl
         PlayClip(_idleClip);
     }
 
-    public IMesh Mesh { get; }
-
-    public Material Material { get; }
+    public IReadOnlyList<ModelPart> Parts { get; }
 
     public MatrixPalette Palette { get; }
 

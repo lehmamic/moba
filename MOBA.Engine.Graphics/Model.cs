@@ -1,3 +1,5 @@
+using Silk.NET.Maths;
+
 namespace MOBA.Engine.Graphics;
 
 /// <summary>
@@ -56,4 +58,12 @@ public sealed class Model : IDisposable
     }
 }
 
-public readonly record struct ModelPart(IMesh Mesh, Material Material);
+/// <summary>
+/// One drawable primitive of a <see cref="Model"/>: its mesh, its material, and the
+/// local transform that positions it inside the model's hierarchy. For single-mesh
+/// assets the transform is <see cref="Matrix4X4{T}.Identity"/>; for multi-part assets
+/// loaded from a glTF scene graph it carries the cumulative node-to-root world matrix
+/// so each primitive renders at its authored position relative to the owning actor.
+/// The renderer composes this with <c>actor.Transform.World</c> when drawing.
+/// </summary>
+public readonly record struct ModelPart(IMesh Mesh, Material Material, Matrix4X4<float> LocalTransform);

@@ -31,32 +31,51 @@ internal static class GltfModelLoader
         Skeleton? skeleton = null;
         Skin? gltfSkin = null;
 
-        foreach (var mesh in modelRoot.LogicalMeshes)
+        // Iterate scene-graph nodes (not just unique meshes). A node carries the
+        // world matrix that positions its mesh inside the model — for multi-part
+        // assets like the dimension-rift terrain this is the only place the
+        // per-instance offset/rotation lives. The same LogicalMesh can be
+        // referenced by many nodes (repeated tower instances etc.); each becomes
+        // its own ModelPart with its own LocalTransform sharing the same IMesh
+        // is not yet supported by the backend so we re-upload, but that's a
+        // memory optimisation for later.
+        foreach (var node in modelRoot.LogicalNodes)
         {
+            var mesh = node.Mesh;
+            if (mesh is null)
+            {
+                continue;
+            }
+
+            var skin = node.Skin;
+            var nodeWorld = ToSilk(node.WorldMatrix);
+
             foreach (var prim in mesh.Primitives)
             {
-                // Find the skin via the node that holds this mesh. glTF skins are
-                // attached at the node level, not the primitive level.
-                var meshNode = modelRoot.LogicalNodes.FirstOrDefault(n => n.Mesh == mesh);
-                var skin = meshNode?.Skin;
                 var primIsSkinned = skin != null && prim.GetVertexAccessor("JOINTS_0") != null;
 
                 IMesh glMesh;
                 bool partIsSkinned;
+                Matrix4X4<float> partTransform;
                 if (primIsSkinned)
                 {
+                    // Skinned primitives are positioned by the skeleton's bone
+                    // matrices, not the node's world matrix — applying it here
+                    // would double-transform every vertex.
                     glMesh = backend.CreateSkinnedMesh(ExtractSkinnedVertices(prim), ExtractIndices(prim));
                     partIsSkinned = true;
+                    partTransform = Matrix4X4<float>.Identity;
                     gltfSkin ??= skin;
                 }
                 else
                 {
                     glMesh = backend.CreateMesh(ExtractVertices(prim), ExtractIndices(prim));
                     partIsSkinned = false;
+                    partTransform = nodeWorld;
                 }
 
                 var material = BuildMaterial(prim.Material, backend, assets, partIsSkinned);
-                parts.Add(new ModelPart(glMesh, material));
+                parts.Add(new ModelPart(glMesh, material, partTransform));
             }
         }
 

@@ -31,33 +31,39 @@ public sealed class Renderer
         var viewProjection = camera.ViewProjection;
         var viewPosition = camera.Position;
 
-        // Pass 1: static meshes. Within the pass we only re-bind the shader
-        // when the next renderable actually uses a different one — for the
-        // current asset set every static uses phong_textured, so BeginPass
-        // fires exactly once.
+        // Pass 1: every static part of every renderable. A skinned-renderable
+        // can still contribute static parts here (e.g. a weapon not bound to
+        // bones) — the per-part `ISkinnedMesh` check defers skinned parts to
+        // pass 2. Shader rebinds only when the next part actually uses a
+        // different one; for the current asset set every static uses
+        // phong_textured, so BeginPass typically fires exactly once.
         IShader? currentShader = null;
         foreach (var actor in scene.Actors)
         {
             foreach (var component in actor.Components)
             {
-                if (component is ISkinnedRenderable)
-                {
-                    continue;
-                }
                 if (component is not IRenderable renderable)
                 {
                     continue;
                 }
-                if (renderable.Material.Shader != currentShader)
+                foreach (var part in renderable.Parts)
                 {
-                    _backend.BeginPass(renderable.Material.Shader, viewProjection, viewPosition, light);
-                    currentShader = renderable.Material.Shader;
+                    if (part.Mesh is ISkinnedMesh)
+                    {
+                        continue;
+                    }
+                    if (part.Material.Shader != currentShader)
+                    {
+                        _backend.BeginPass(part.Material.Shader, viewProjection, viewPosition, light);
+                        currentShader = part.Material.Shader;
+                    }
+                    _backend.DrawMeshInPass(part.Mesh, part.Material, part.LocalTransform * actor.Transform.World);
                 }
-                _backend.DrawMeshInPass(renderable.Mesh, renderable.Material, actor.Transform.World);
             }
         }
 
-        // Pass 2: skinned meshes.
+        // Pass 2: skinned parts of skinned renderables, sharing the component's
+        // matrix palette across every skinned part of the same character.
         currentShader = null;
         foreach (var actor in scene.Actors)
         {
@@ -67,16 +73,23 @@ public sealed class Renderer
                 {
                     continue;
                 }
-                if (skinned.Material.Shader != currentShader)
+                foreach (var part in skinned.Parts)
                 {
-                    _backend.BeginPass(skinned.Material.Shader, viewProjection, viewPosition, light);
-                    currentShader = skinned.Material.Shader;
+                    if (part.Mesh is not ISkinnedMesh skinnedMesh)
+                    {
+                        continue;
+                    }
+                    if (part.Material.Shader != currentShader)
+                    {
+                        _backend.BeginPass(part.Material.Shader, viewProjection, viewPosition, light);
+                        currentShader = part.Material.Shader;
+                    }
+                    _backend.DrawSkinnedMeshInPass(
+                        skinnedMesh,
+                        part.Material,
+                        part.LocalTransform * actor.Transform.World,
+                        skinned.Palette);
                 }
-                _backend.DrawSkinnedMeshInPass(
-                    (ISkinnedMesh)skinned.Mesh,
-                    skinned.Material,
-                    actor.Transform.World,
-                    skinned.Palette);
             }
         }
 
