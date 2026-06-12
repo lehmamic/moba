@@ -1,0 +1,792 @@
+{
+  "Width": 150.0,
+  "Length": 150.0,
+  "Attribution": {
+    "Source": "Sketchfab: 5v5 Game Map",
+    "URL": "https://sketchfab.com/3d-models/5v5-game-map-24c2a1468ef44df0925b5c84fc7587c0",
+    "License": "CC BY-NC 4.0",
+    "LicenseURL": "https://creativecommons.org/licenses/by-nc/4.0/"
+  },
+  "TerrainMesh": "dimension-rift",
+  "Buildings": [
+    {
+      "Id": "blue_nexus",
+      "Type": "Nexus",
+      "Transform": {
+        "Position": [
+          67.183,
+          -0.085,
+          -63.304
+        ],
+        "Rotation": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "Scale": [
+          1.0,
+          1.0,
+          1.0
+        ]
+      },
+      "File": "assets/buildings/blue-nexus.glb",
+      "Team": "Blue"
+    },
+    {
+      "Id": "red_nexus",
+      "Type": "Nexus",
+      "Transform": {
+        "Position": [
+          -53.651,
+          -0.05,
+          58.304
+        ],
+        "Rotation": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "Scale": [
+          1.0,
+          1.0,
+          1.0
+        ]
+      },
+      "File": "assets/buildings/red-nexus.glb",
+      "Team": "Red"
+    },
+    {
+      "Id": "blue_tower_1",
+      "Type": "Tower",
+      "Transform": {
+        "Position": [
+          53.052,
+          -0.696,
+          -49.203
+        ],
+        "Rotation": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "Scale": [
+          1.0,
+          1.0,
+          1.0
+        ]
+      },
+      "File": "assets/buildings/blue-tower.glb",
+      "Team": "Blue"
+    },
+    {
+      "Id": "blue_tower_2",
+      "Type": "Tower",
+      "Transform": {
+        "Position": [
+          42.687,
+          -0.696,
+          -71.241
+        ],
+        "Rotation": [
+          0.0,
+          -44.85,
+          0.0
+        ],
+        "Scale": [
+          1.0,
+          1.0,
+          1.0
+        ]
+      },
+      "File": "assets/buildings/blue-tower.glb",
+      "Team": "Blue"
+    },
+    {
+      "Id": "blue_tower_3",
+      "Type": "Tower",
+      "Transform": {
+        "Position": [
+          75.192,
+          -0.696,
+          -38.58
+        ],
+        "Rotation": [
+          0.0,
+          42.25,
+          0.0
+        ],
+        "Scale": [
+          1.0,
+          1.0,
+          1.0
+        ]
+      },
+      "File": "assets/buildings/blue-tower.glb",
+      "Team": "Blue"
+    },
+    {
+      "Id": "blue_tower_4",
+      "Type": "Tower",
+      "Transform": {
+        "Position": [
+          36.064,
+          -0.696,
+          -35.999
+        ],
+        "Rotation": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "Scale": [
+          1.0,
+          1.0,
+          1.0
+        ]
+      },
+      "File": "assets/buildings/blue-tower.glb",
+      "Team": "Blue"
+    },
+    {
+      "Id": "blue_tower_5",
+      "Type": "Tower",
+      "Transform": {
+        "Position": [
+          24.269,
+          -0.696,
+          -16.237
+        ],
+        "Rotation": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "Scale": [
+          1.0,
+          1.0,
+          1.0
+        ]
+      },
+      "File": "assets/buildings/blue-tower.glb",
+      "Team": "Blue"
+    },
+    {
+      "Id": "blue_tower_6",
+      "Type": "Tower",
+      "Transform": {
+        "Position": [
+          17.164,
+          -0.696,
+          -72.862
+        ],
+        "Rotation": [
+          0.0,
+          -44.85,
+          0.0
+        ],
+        "Scale": [
+          1.0,
+          1.0,
+          1.0
+        ]
+      },
+      "File": "assets/buildings/blue-tower.glb",
+      "Team": "Blue"
+    },
+    {
+      "Id": "blue_tower_7",
+      "Type": "Tower",
+      "Transform": {
+        "Position": [
+          -26.743,
+          -0.696,
+          -72.922
+        ],
+        "Rotation": [
+          0.0,
+          -44.85,
+          0.0
+        ],
+        "Scale": [
+          1.0,
+          1.0,
+          1.0
+        ]
+      },
+      "File": "assets/buildings/blue-tower.glb",
+      "Team": "Blue"
+    },
+    {
+      "Id": "blue_tower_8",
+      "Type": "Tower",
+      "Transform": {
+        "Position": [
+          76.909,
+          -0.696,
+          -13.033
+        ],
+        "Rotation": [
+          0.0,
+          42.25,
+          0.0
+        ],
+        "Scale": [
+          1.0,
+          1.0,
+          1.0
+        ]
+      },
+      "File": "assets/buildings/blue-tower.glb",
+      "Team": "Blue"
+    },
+    {
+      "Id": "blue_tower_9",
+      "Type": "Tower",
+      "Transform": {
+        "Position": [
+          76.889,
+          -0.696,
+          30.777
+        ],
+        "Rotation": [
+          0.0,
+          42.25,
+          0.0
+        ],
+        "Scale": [
+          1.0,
+          1.0,
+          1.0
+        ]
+      },
+      "File": "assets/buildings/blue-tower.glb",
+      "Team": "Blue"
+    },
+    {
+      "Id": "red_tower_1",
+      "Type": "Tower",
+      "Transform": {
+        "Position": [
+          -39.616,
+          -0.046,
+          43.584
+        ],
+        "Rotation": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "Scale": [
+          1.0,
+          1.0,
+          1.0
+        ]
+      },
+      "File": "assets/buildings/red-tower.glb",
+      "Team": "Red"
+    },
+    {
+      "Id": "red_tower_2",
+      "Type": "Tower",
+      "Transform": {
+        "Position": [
+          -62.058,
+          -0.046,
+          33.363
+        ],
+        "Rotation": [
+          0.0,
+          43.24,
+          0.0
+        ],
+        "Scale": [
+          1.0,
+          1.0,
+          1.0
+        ]
+      },
+      "File": "assets/buildings/red-tower.glb",
+      "Team": "Red"
+    },
+    {
+      "Id": "red_tower_3",
+      "Type": "Tower",
+      "Transform": {
+        "Position": [
+          -29.516,
+          -0.046,
+          65.777
+        ],
+        "Rotation": [
+          0.0,
+          -46.18,
+          0.0
+        ],
+        "Scale": [
+          1.0,
+          1.0,
+          1.0
+        ]
+      },
+      "File": "assets/buildings/red-tower.glb",
+      "Team": "Red"
+    },
+    {
+      "Id": "red_tower_4",
+      "Type": "Tower",
+      "Transform": {
+        "Position": [
+          -3.895,
+          -0.046,
+          67.762
+        ],
+        "Rotation": [
+          0.0,
+          -46.18,
+          0.0
+        ],
+        "Scale": [
+          1.0,
+          1.0,
+          1.0
+        ]
+      },
+      "File": "assets/buildings/red-tower.glb",
+      "Team": "Red"
+    },
+    {
+      "Id": "red_tower_5",
+      "Type": "Tower",
+      "Transform": {
+        "Position": [
+          39.923,
+          -0.046,
+          67.877
+        ],
+        "Rotation": [
+          0.0,
+          -46.18,
+          0.0
+        ],
+        "Scale": [
+          1.0,
+          1.0,
+          1.0
+        ]
+      },
+      "File": "assets/buildings/red-tower.glb",
+      "Team": "Red"
+    },
+    {
+      "Id": "red_tower_6",
+      "Type": "Tower",
+      "Transform": {
+        "Position": [
+          -22.731,
+          -0.046,
+          30.558
+        ],
+        "Rotation": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "Scale": [
+          1.0,
+          1.0,
+          1.0
+        ]
+      },
+      "File": "assets/buildings/red-tower.glb",
+      "Team": "Red"
+    },
+    {
+      "Id": "red_tower_7",
+      "Type": "Tower",
+      "Transform": {
+        "Position": [
+          -10.728,
+          -0.046,
+          10.586
+        ],
+        "Rotation": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "Scale": [
+          1.0,
+          1.0,
+          1.0
+        ]
+      },
+      "File": "assets/buildings/red-tower.glb",
+      "Team": "Red"
+    },
+    {
+      "Id": "red_tower_8",
+      "Type": "Tower",
+      "Transform": {
+        "Position": [
+          -63.849,
+          -0.046,
+          7.812
+        ],
+        "Rotation": [
+          0.0,
+          43.24,
+          0.0
+        ],
+        "Scale": [
+          1.0,
+          1.0,
+          1.0
+        ]
+      },
+      "File": "assets/buildings/red-tower.glb",
+      "Team": "Red"
+    },
+    {
+      "Id": "red_tower_9",
+      "Type": "Tower",
+      "Transform": {
+        "Position": [
+          -63.873,
+          -0.046,
+          -36.045
+        ],
+        "Rotation": [
+          0.0,
+          43.24,
+          0.0
+        ],
+        "Scale": [
+          1.0,
+          1.0,
+          1.0
+        ]
+      },
+      "File": "assets/buildings/red-tower.glb",
+      "Team": "Red"
+    }
+  ],
+  "Monsters": [
+    {
+      "Id": "blue_buff",
+      "Type": "BlueBuff",
+      "Transform": {
+        "Position": [
+          26.045,
+          6.486,
+          52.945
+        ],
+        "Rotation": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "Scale": [
+          1.0,
+          1.0,
+          1.0
+        ]
+      },
+      "File": "assets/monsters/blue-buff.glb"
+    },
+    {
+      "Id": "red_buff",
+      "Type": "RedBuff",
+      "Transform": {
+        "Position": [
+          8.063,
+          -0.084,
+          43.864
+        ],
+        "Rotation": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "Scale": [
+          1.0,
+          1.0,
+          1.0
+        ]
+      },
+      "File": "assets/monsters/red-buff.glb"
+    },
+    {
+      "Id": "lizard",
+      "Type": "Lizard",
+      "Transform": {
+        "Position": [
+          36.956,
+          -0.087,
+          47.228
+        ],
+        "Rotation": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "Scale": [
+          1.0,
+          1.0,
+          1.0
+        ]
+      },
+      "File": "assets/monsters/lizard.glb"
+    },
+    {
+      "Id": "bear",
+      "Type": "Bear",
+      "Transform": {
+        "Position": [
+          1.56,
+          -0.074,
+          26.089
+        ],
+        "Rotation": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "Scale": [
+          1.0,
+          1.0,
+          1.0
+        ]
+      },
+      "File": "assets/monsters/bear.glb"
+    },
+    {
+      "Id": "deer",
+      "Type": "Deer",
+      "Transform": {
+        "Position": [
+          65.284,
+          -0.042,
+          64.299
+        ],
+        "Rotation": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "Scale": [
+          1.0,
+          1.0,
+          1.0
+        ]
+      },
+      "File": "assets/monsters/deer.glb"
+    },
+    {
+      "Id": "red_minion_1",
+      "Type": "Minion",
+      "Transform": {
+        "Position": [
+          -42.976,
+          -0.136,
+          47.259
+        ],
+        "Rotation": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "Scale": [
+          1.0,
+          1.0,
+          1.0
+        ]
+      },
+      "File": "assets/monsters/red-minion.glb",
+      "Team": "Red"
+    },
+    {
+      "Id": "red_minion_2",
+      "Type": "Minion",
+      "Transform": {
+        "Position": [
+          -52.386,
+          -0.162,
+          41.504
+        ],
+        "Rotation": [
+          0.0,
+          14.57,
+          0.0
+        ],
+        "Scale": [
+          1.0,
+          1.0,
+          1.0
+        ]
+      },
+      "File": "assets/monsters/red-minion.glb",
+      "Team": "Red"
+    },
+    {
+      "Id": "red_minion_3",
+      "Type": "Minion",
+      "Transform": {
+        "Position": [
+          -61.654,
+          -0.197,
+          39.831
+        ],
+        "Rotation": [
+          0.0,
+          34.09,
+          0.0
+        ],
+        "Scale": [
+          1.0,
+          1.0,
+          1.0
+        ]
+      },
+      "File": "assets/monsters/red-minion.glb",
+      "Team": "Red"
+    },
+    {
+      "Id": "red_minion_4",
+      "Type": "Minion",
+      "Transform": {
+        "Position": [
+          -36.383,
+          -0.197,
+          56.689
+        ],
+        "Rotation": [
+          0.0,
+          -23.28,
+          0.0
+        ],
+        "Scale": [
+          1.0,
+          1.0,
+          1.0
+        ]
+      },
+      "File": "assets/monsters/red-minion.glb",
+      "Team": "Red"
+    },
+    {
+      "Id": "red_minion_5",
+      "Type": "Minion",
+      "Transform": {
+        "Position": [
+          -32.818,
+          -0.162,
+          65.29
+        ],
+        "Rotation": [
+          0.0,
+          -42.8,
+          0.0
+        ],
+        "Scale": [
+          1.0,
+          1.0,
+          1.0
+        ]
+      },
+      "File": "assets/monsters/red-minion.glb",
+      "Team": "Red"
+    },
+    {
+      "Id": "blue_minion_1",
+      "Type": "Minion",
+      "Transform": {
+        "Position": [
+          49.979,
+          -0.099,
+          -65.567
+        ],
+        "Rotation": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "Scale": [
+          1.0,
+          1.0,
+          1.0
+        ]
+      },
+      "File": "assets/monsters/blue-minion.glb",
+      "Team": "Blue"
+    },
+    {
+      "Id": "blue_minion_2",
+      "Type": "Minion",
+      "Transform": {
+        "Position": [
+          49.302,
+          -0.099,
+          -59.661
+        ],
+        "Rotation": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "Scale": [
+          1.0,
+          1.0,
+          1.0
+        ]
+      },
+      "File": "assets/monsters/blue-minion.glb",
+      "Team": "Blue"
+    },
+    {
+      "Id": "blue_minion_3",
+      "Type": "Minion",
+      "Transform": {
+        "Position": [
+          63.616,
+          -0.099,
+          -48.243
+        ],
+        "Rotation": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "Scale": [
+          1.0,
+          1.0,
+          1.0
+        ]
+      },
+      "File": "assets/monsters/blue-minion.glb",
+      "Team": "Blue"
+    },
+    {
+      "Id": "blue_minion_4",
+      "Type": "Minion",
+      "Transform": {
+        "Position": [
+          73.268,
+          -0.099,
+          -46.781
+        ],
+        "Rotation": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "Scale": [
+          1.0,
+          1.0,
+          1.0
+        ]
+      },
+      "File": "assets/monsters/blue-minion.glb",
+      "Team": "Blue"
+    }
+  ]
+}
