@@ -17,5 +17,13 @@ public sealed class MobaWorld
     public void Populate(Scene scene)
     {
         scene.AddActor(new GroundPlaneActor(Map));
+        foreach (var building in Map.Buildings)
+        {
+            scene.AddActor(new BuildingActor(building));
+        }
+        foreach (var monster in Map.Monsters)
+        {
+            scene.AddActor(new MonsterActor(monster));
+        }
     }
 }

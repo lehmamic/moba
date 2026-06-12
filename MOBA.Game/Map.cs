@@ -1,20 +1,47 @@
+using Silk.NET.Maths;
+
 namespace MOBA.Game;
 
+/// <summary>
+/// Runtime map description: dimensions plus the lists of static <see cref="Building"/>s
+/// (towers, nexus, inhibitor placeholders) and <see cref="Monster"/>s (jungle camps,
+/// buff mobs, minion-spawn templates) extracted from the source Blender scene. The
+/// terrain ground mesh is referenced by short name in <see cref="TerrainMesh"/>.
+/// </summary>
 public sealed class Map
 {
-    public Map(float width, float length)
+    public Map(
+        float width,
+        float length,
+        string terrainMesh = "default-terrain",
+        IReadOnlyList<Building>? buildings = null,
+        IReadOnlyList<Monster>? monsters = null)
     {
         Width = width;
         Length = length;
+        TerrainMesh = terrainMesh;
+        Buildings = buildings ?? [];
+        Monsters = monsters ?? [];
     }
 
     public float Width { get; }
 
     public float Length { get; }
 
+    public string TerrainMesh { get; }
+
+    public IReadOnlyList<Building> Buildings { get; }
+
+    public IReadOnlyList<Monster> Monsters { get; }
+
     /// <summary>Built from a deserialised <see cref="MapDefinition"/> (JSON).</summary>
     public static Map FromDefinition(MapDefinition definition) =>
-        new(definition.Width, definition.Length);
+        new(
+            definition.Width,
+            definition.Length,
+            definition.TerrainMesh ?? "default-terrain",
+            (definition.Buildings ?? []).Select(Building.FromDefinition).ToList(),
+            (definition.Monsters ?? []).Select(Monster.FromDefinition).ToList());
 
     /// <summary>
     /// Skeleton fallback: 150 × 150 world units (≈ LoL-scale playing field in our unit).
@@ -22,4 +49,123 @@ public sealed class Map
     /// (e.g. unit tests, scripted simulations).
     /// </summary>
     public static Map LeagueSized() => new(150f, 150f);
+}
+
+/// <summary>
+/// One destructible building instance on the map (a Tower, Nexus or Inhibitor).
+/// Decoded from <see cref="BuildingDef"/>; carries the parsed
+/// <see cref="Position"/>/<see cref="Rotation"/>/<see cref="Scale"/> plus the
+/// short mesh-asset name the renderer uses to look up the prefab GLB.
+/// </summary>
+public sealed class Building
+{
+    public Building(string id, string type, string? team, Vector3D<float> position, Quaternion<float> rotation, Vector3D<float> scale, string meshAsset)
+    {
+        Id = id;
+        Type = type;
+        Team = team;
+        Position = position;
+        Rotation = rotation;
+        Scale = scale;
+        MeshAsset = meshAsset;
+    }
+
+    public string Id { get; }
+    public string Type { get; }
+    public string? Team { get; }
+    public Vector3D<float> Position { get; }
+    public Quaternion<float> Rotation { get; }
+    public Vector3D<float> Scale { get; }
+    /// <summary>Short asset name (filename without extension), e.g. <c>blue-tower</c>.</summary>
+    public string MeshAsset { get; }
+
+    public static Building FromDefinition(BuildingDef def) =>
+        new(
+            def.Id,
+            def.Type,
+            def.Team,
+            EntityTransform.ParsePosition(def.Transform),
+            EntityTransform.ParseRotation(def.Transform),
+            EntityTransform.ParseScale(def.Transform),
+            EntityTransform.MeshAssetFromFile(def.File));
+}
+
+/// <summary>
+/// Mob / monster spawn instance. Same shape as <see cref="Building"/>; the
+/// distinction lives in <see cref="Type"/> + the JSON section it came from.
+/// </summary>
+public sealed class Monster
+{
+    public Monster(string id, string type, string? team, Vector3D<float> position, Quaternion<float> rotation, Vector3D<float> scale, string meshAsset)
+    {
+        Id = id;
+        Type = type;
+        Team = team;
+        Position = position;
+        Rotation = rotation;
+        Scale = scale;
+        MeshAsset = meshAsset;
+    }
+
+    public string Id { get; }
+    public string Type { get; }
+    public string? Team { get; }
+    public Vector3D<float> Position { get; }
+    public Quaternion<float> Rotation { get; }
+    public Vector3D<float> Scale { get; }
+    public string MeshAsset { get; }
+
+    public static Monster FromDefinition(MonsterDef def) =>
+        new(
+            def.Id,
+            def.Type,
+            def.Team,
+            EntityTransform.ParsePosition(def.Transform),
+            EntityTransform.ParseRotation(def.Transform),
+            EntityTransform.ParseScale(def.Transform),
+            EntityTransform.MeshAssetFromFile(def.File));
+}
+
+/// <summary>
+/// Shared parsing helpers for <see cref="TransformDef"/>. Rotation arrives as
+/// Euler degrees in <c>[pitch (X), yaw (Y), roll (Z)]</c> order; built into a
+/// quaternion via <see cref="Quaternion{T}.CreateFromYawPitchRoll"/>.
+/// </summary>
+internal static class EntityTransform
+{
+    public static Vector3D<float> ParsePosition(TransformDef t) =>
+        new(t.Position[0], t.Position[1], t.Position[2]);
+
+    public static Vector3D<float> ParseScale(TransformDef t) =>
+        new(t.Scale[0], t.Scale[1], t.Scale[2]);
+
+    public static Quaternion<float> ParseRotation(TransformDef t)
+    {
+        var pitch = float.DegreesToRadians(t.Rotation[0]);
+        var yaw = float.DegreesToRadians(t.Rotation[1]);
+        var roll = float.DegreesToRadians(t.Rotation[2]);
+        return Quaternion<float>.CreateFromYawPitchRoll(yaw, pitch, roll);
+    }
+
+    /// <summary>
+    /// Strips the leading <c>assets/</c> and the file extension so the result is
+    /// the key the unified model cache expects: e.g.
+    /// <c>"assets/buildings/blue-tower.glb"</c> → <c>"buildings/blue-tower"</c>.
+    /// </summary>
+    public static string MeshAssetFromFile(string file)
+    {
+        var s = file.Replace('\\', '/');
+        const string prefix = "assets/";
+        if (s.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
+        {
+            s = s[prefix.Length..];
+        }
+        var dotIdx = s.LastIndexOf('.');
+        var slashIdx = s.LastIndexOf('/');
+        if (dotIdx > slashIdx)
+        {
+            s = s[..dotIdx];
+        }
+        return s;
+    }
 }
