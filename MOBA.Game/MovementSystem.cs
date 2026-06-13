@@ -10,8 +10,9 @@ namespace MOBA.Game;
 /// <list type="bullet">
 ///   <item><b>Pre-sim (event):</b> incoming <see cref="MoveCommandMessage"/>s
 ///     are routed via <see cref="PlayerConnectionSystem"/> to the sender's own
-///     player actor, the <see cref="MoveTargetComponent.Target"/> is set, and a
-///     destination marker is spawned + broadcast.</item>
+///     player actor, <see cref="NavMesh.TryFindPath"/> turns the snapped target
+///     into a corner list, the path is loaded into <see cref="MoveTargetComponent"/>,
+///     and a destination marker is spawned + broadcast.</item>
 ///   <item><b>Post-sim (<see cref="IPostUpdateSystem.OnPostUpdate"/>):</b> walks
 ///     actors with a <see cref="MoveTargetComponent"/> + <see cref="NetworkIdentityComponent"/>
 ///     and broadcasts position updates. When the component cleared its target
@@ -56,16 +57,16 @@ public sealed class MovementSystem : IEngineSystem, IPostUpdateSystem
                 continue;
             }
 
-            var hasTarget = moveTarget.Target is not null;
+            var hasPath = moveTarget.HasPath;
             var hasMarker = moveTarget.MarkerId is not null;
-            if (!hasTarget && !hasMarker)
+            if (!hasPath && !hasMarker)
             {
                 continue;
             }
 
             BroadcastPositionUpdate(actor, netId.Id);
 
-            if (!hasTarget && hasMarker)
+            if (!hasPath && hasMarker)
             {
                 DespawnMarker(moveTarget.MarkerId!.Value);
                 moveTarget.MarkerId = null;
@@ -117,12 +118,21 @@ public sealed class MovementSystem : IEngineSystem, IPostUpdateSystem
             return;
         }
 
+        // Funnel the polygon-following path into a corner list. Reject the
+        // command if no path exists (would otherwise let the player teleport
+        // to a disconnected island via the linear interp).
+        var waypoints = new List<Vector3D<float>>();
+        if (!_navMesh.TryFindPath(actor.Transform.Position, target, waypoints))
+        {
+            return;
+        }
+
         if (moveTarget.MarkerId is { } oldMarkerId)
         {
             DespawnMarker(oldMarkerId);
         }
 
-        moveTarget.Target = target;
+        moveTarget.SetPath(waypoints);
 
         var markerId = _nextMarkerId++;
         var markerPosition = new Vector3D<float>(target.X, 0.5f, target.Z);

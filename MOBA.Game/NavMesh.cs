@@ -14,6 +14,8 @@ namespace MOBA.Game;
 public sealed class NavMesh
 {
     private const int MaxVertsPerPoly = 6;
+    private const int MaxPathPolys = 256;
+    private const int MaxStraightPath = 256;
 
     // Wider Y search than X/Z so we tolerate the slight gap between the agent's
     // ground-plane click (Y = 0 from MousePicker.PickGround) and the actual
@@ -75,6 +77,54 @@ public sealed class NavMesh
         }
         snapped = new Vector3D<float>(nearestPt.X, nearestPt.Y, nearestPt.Z);
         return true;
+    }
+
+    /// <summary>
+    /// Finds a polygon-following path between <paramref name="from"/> and
+    /// <paramref name="to"/>, then funnel-straightens it into a list of
+    /// world-space waypoints suitable for direct linear interpolation. The
+    /// first waypoint is the snapped start, the last the snapped destination;
+    /// intermediate entries are the corners the straightener returned.
+    /// Returns false if either endpoint won't snap to a polygon, or if the
+    /// poly-level search fails outright.
+    /// </summary>
+    public bool TryFindPath(Vector3D<float> from, Vector3D<float> to, List<Vector3D<float>> waypointsOut)
+    {
+        waypointsOut.Clear();
+
+        var startCenter = new RcVec3f(from.X, from.Y, from.Z);
+        var endCenter = new RcVec3f(to.X, to.Y, to.Z);
+        if (_query.FindNearestPoly(startCenter, DefaultSearchExtents, _filter,
+                out var startRef, out var startPos, out _).Failed() || startRef == 0)
+        {
+            return false;
+        }
+        if (_query.FindNearestPoly(endCenter, DefaultSearchExtents, _filter,
+                out var endRef, out var endPos, out _).Failed() || endRef == 0)
+        {
+            return false;
+        }
+
+        Span<long> polyPath = stackalloc long[MaxPathPolys];
+        if (_query.FindPath(startRef, endRef, startPos, endPos, _filter,
+                polyPath, out var polyCount, MaxPathPolys).Failed() || polyCount == 0)
+        {
+            return false;
+        }
+
+        Span<DtStraightPath> straight = stackalloc DtStraightPath[MaxStraightPath];
+        if (_query.FindStraightPath(startPos, endPos, polyPath[..polyCount], polyCount,
+                straight, out var straightCount, MaxStraightPath, 0).Failed())
+        {
+            return false;
+        }
+
+        for (var i = 0; i < straightCount; i++)
+        {
+            var step = straight[i];
+            waypointsOut.Add(new Vector3D<float>(step.pos.X, step.pos.Y, step.pos.Z));
+        }
+        return waypointsOut.Count > 0;
     }
 
     /// <summary>
