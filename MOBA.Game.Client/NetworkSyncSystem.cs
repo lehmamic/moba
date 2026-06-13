@@ -90,6 +90,9 @@ public sealed class NetworkSyncSystem : IEngineSystem
             case MessageType.ActorDespawn:
                 HandleDespawn(ActorDespawnMessage.ReadPayload(reader));
                 break;
+            case MessageType.MovePath:
+                HandleMovePath(MovePathMessage.ReadPayload(reader));
+                break;
             case MessageType.MoveCommand:
             case MessageType.Join:
                 // Client → server messages — ignore if ever echoed back.
@@ -140,12 +143,22 @@ public sealed class NetworkSyncSystem : IEngineSystem
         player.Transform.Scale = Vector3D<float>.One * 3f;
         _ = new NetworkIdentityComponent(player, message.Id);
         _ = new SkeletalMeshRendererComponent(player, _playerModel);
+        _ = new ReplicatedPathComponent(player);
         if (_localPlayerNetworkId == message.Id)
         {
             _ = new LocalPlayerInputComponent(player, _cameras, _transport, _navMesh);
         }
         _scene.AddActor(player);
         _actorsById[message.Id] = player;
+    }
+
+    private void HandleMovePath(MovePathMessage message)
+    {
+        if (_actorsById.TryGetValue(message.NetworkId, out var actor)
+            && actor.GetComponent<ReplicatedPathComponent>() is { } path)
+        {
+            path.SetWaypoints(message.Waypoints);
+        }
     }
 
     private void SpawnMarker(ActorSpawnMessage message)

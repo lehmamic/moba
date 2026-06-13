@@ -15,6 +15,13 @@ public enum MessageType : byte
     Join = 5,
     /// <summary>Server → Client: "your local player actor is this network id."</summary>
     AssignLocalActor = 6,
+    /// <summary>
+    /// Server → Client: "this networked actor's currently-active path is this
+    /// waypoint sequence." Sent once per accepted MoveCommand. Authoritative
+    /// snapshot for client-side debug rendering (and, later, minimap path
+    /// display) — clients do not pathfind themselves.
+    /// </summary>
+    MovePath = 7,
 }
 
 /// <summary>Distinguishes spawn-message payloads on the wire.</summary>

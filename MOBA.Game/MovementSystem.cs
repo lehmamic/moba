@@ -134,6 +134,16 @@ public sealed class MovementSystem : IEngineSystem, IPostUpdateSystem
 
         moveTarget.SetPath(waypoints);
 
+        // Authoritative path snapshot to every client — same fan-out as the
+        // marker spawn. Clients render it (F3 overlay) and keep it on the
+        // actor for later minimap use; they never pathfind themselves.
+        var netId = actor.GetComponent<NetworkIdentityComponent>();
+        if (netId is not null)
+        {
+            var pathMessage = new MovePathMessage(netId.Id, [.. waypoints]);
+            _transport.SendToAll(NetChannel.Reliable, pathMessage.Serialize());
+        }
+
         var markerId = _nextMarkerId++;
         var markerPosition = new Vector3D<float>(target.X, 0.5f, target.Z);
         var marker = new MarkerActor(markerId, markerPosition);
