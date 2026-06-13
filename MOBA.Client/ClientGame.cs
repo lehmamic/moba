@@ -151,7 +151,14 @@ public sealed class ClientGame : GameHost
         var wireframeMaterial = new Material(_assets.LoadShader("wireframe"));
         var navMeshOverlayActor = new NavMeshOverlayActor(_backend, navMesh, wireframeMaterial);
         Game.Scene.AddActor(navMeshOverlayActor);
-        var debugOverlay = new DebugOverlaySystem(_input.Context, navMeshOverlayActor);
+
+        // F3 debug overlay — server-replicated paths for every player. Cyan shader
+        // distinguishes them from the magenta navmesh wireframe when both are on.
+        var pathMaterial = new Material(_assets.LoadShader("path"));
+        var pathOverlayActor = new PathOverlayActor(_backend, Game.Scene, pathMaterial);
+        Game.Scene.AddActor(pathOverlayActor);
+
+        var debugOverlay = new DebugOverlaySystem(_input.Context, navMeshOverlayActor, pathOverlayActor);
 
         // Order matters: transport before sync so MessageReceived events fire
         // after polling. NetworkSyncSystem.OnInitialize sends the Join message
@@ -167,7 +174,7 @@ public sealed class ClientGame : GameHost
 
         _backend.Resize(_window.FramebufferSize.X, _window.FramebufferSize.Y);
 
-        Console.WriteLine("[MOBA.Client] Loaded. LMB = move player, F1 = camera toggle, F2 = navmesh overlay, RMB+drag = look, WASD/QE = free-fly.");
+        Console.WriteLine("[MOBA.Client] Loaded. LMB = move player, F1 = camera toggle, F2 = navmesh, F3 = paths, RMB+drag = look, WASD/QE = free-fly.");
     }
 
     private void OnFramebufferResize(Vector2D<int> size)

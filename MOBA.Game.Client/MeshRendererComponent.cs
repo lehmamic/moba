@@ -25,7 +25,22 @@ public sealed class MeshRendererComponent : Component, IRenderable
     public MeshRendererComponent(Actor owner, Model model, Material materialOverride) : base(owner)
         => Parts = [.. model.Parts.Select(p => new ModelPart(p.Mesh, materialOverride, p.LocalTransform))];
 
-    public IReadOnlyList<ModelPart> Parts { get; }
+    public IReadOnlyList<ModelPart> Parts { get; private set; }
+
+    /// <summary>
+    /// Replaces the single backing mesh while keeping the same material — used by
+    /// the dynamic debug overlays (e.g. the F3 path overlay) which rebuild their
+    /// line geometry whenever the underlying data changes. Caller owns disposal
+    /// of the *old* mesh.
+    /// </summary>
+    public void ReplaceSingleMesh(IMesh mesh)
+    {
+        if (Parts.Count == 0)
+        {
+            throw new InvalidOperationException("Cannot replace mesh — component has no existing part.");
+        }
+        Parts = [new ModelPart(mesh, Parts[0].Material, Parts[0].LocalTransform)];
+    }
 
     /// <summary>
     /// Mutable visibility flag — the renderer skips this component's parts when false.

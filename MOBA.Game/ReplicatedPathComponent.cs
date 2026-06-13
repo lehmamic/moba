@@ -1,15 +1,17 @@
 using MOBA.Engine.Core;
 using Silk.NET.Maths;
 
-namespace MOBA.Game.Client;
+namespace MOBA.Game;
 
 /// <summary>
-/// Client-side snapshot of the most recent server-broadcast path for one
-/// networked actor. Replaced wholesale every time a new <c>MovePathMessage</c>
-/// arrives for this actor; <see cref="Version"/> increments on each write so
-/// rendering systems can detect changes without diffing the waypoint list.
-/// Read-only data — the client never pathfinds itself, the server is the
-/// single source of truth.
+/// Snapshot of the most recent server-broadcast path for one networked actor.
+/// Populated on the client by <c>NetworkSyncSystem</c> when a
+/// <c>MovePathMessage</c> arrives; replaced wholesale on each write and
+/// <see cref="Version"/> increments so rendering systems can detect changes
+/// without diffing the waypoint list. Lives in MOBA.Game (not the client
+/// project) because the data shape — read-only path snapshot — is not
+/// rendering-specific and a future minimap or server-side replay tool may
+/// consume the same component.
 /// </summary>
 public sealed class ReplicatedPathComponent : Component
 {
