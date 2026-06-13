@@ -28,14 +28,15 @@ internal static class Program
 
         var map = JsonSerializer.Deserialize<MapDefinition>(
             File.ReadAllText(options.MapJson),
-            JsonOpts)
-            ?? throw new InvalidDataException($"Could not parse map JSON: {options.MapJson}");
+            JsonOpts) ?? throw new InvalidDataException($"Could not parse map JSON: {options.MapJson}");
 
         var terrainPath = Path.Combine(options.AssetsRoot, "maps", $"{map.TerrainMesh}.glb");
         Console.WriteLine($"[NavMeshGen] terrain = {terrainPath}");
+
         var terrain = MeshExtractor.Load(terrainPath);
-        var (tmin, tmax) = MeshExtractor.Bounds(terrain);
         Console.WriteLine($"  triangles   = {terrain.TriangleCount}");
+
+        var (tmin, tmax) = MeshExtractor.Bounds(terrain);
         Console.WriteLine($"  bounds      = ({tmin.X:F1},{tmin.Y:F1},{tmin.Z:F1}) → ({tmax.X:F1},{tmax.Y:F1},{tmax.Z:F1})");
 
         // Each Building (Tower / Nexus) becomes an obstacle: read the prefab GLB once
@@ -47,10 +48,12 @@ internal static class Program
         var (bytes, stats) = NavMeshBuild.Build(terrain, obstacles);
         Directory.CreateDirectory(Path.GetDirectoryName(options.OutputPath)!);
         File.WriteAllBytes(options.OutputPath, bytes);
+
         Console.WriteLine($"[NavMeshGen] wrote {options.OutputPath} ({bytes.Length / 1024.0:F1} KB)");
         Console.WriteLine($"  polys       = {stats.PolyCount}");
         Console.WriteLine($"  poly-verts  = {stats.VertexCount}");
         Console.WriteLine($"  navmesh-box = ({stats.BoundsMin.X:F1},{stats.BoundsMin.Y:F1},{stats.BoundsMin.Z:F1}) → ({stats.BoundsMax.X:F1},{stats.BoundsMax.Y:F1},{stats.BoundsMax.Z:F1})");
+
         return 0;
     }
 

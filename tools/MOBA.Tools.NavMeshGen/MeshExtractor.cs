@@ -13,13 +13,16 @@ internal static class MeshExtractor
 {
     /// <summary>
     /// Substrings (case-insensitive) of node names whose geometry must NOT enter the
-    /// navmesh input. The terrain GLB packs grass tufts and other foliage as separate
-    /// nodes ("PGD_M_20FoliageGroup_*", "...FoliageGroupR_*"); their small upright
-    /// silhouettes get rasterised as ledge spans by Recast and turn into impassable
-    /// pillars — but visually they are clearly walk-through. Filtering by node name
-    /// is the cheapest way to keep them out of the input without splitting the GLB.
+    /// navmesh input. Two categories today:
+    ///   - "Foliage" → small background plants ("PGD_M_20FoliageGroup_*"),
+    ///   - "JungleGrass" → the LoL-style bush/brush clusters players walk into.
+    /// Their small upright silhouettes get rasterised as ledge spans by Recast and
+    /// turn into impassable pillars — but visually they are clearly walk-through.
+    /// Trees (TreeGroup_*, YeQuTree*) stay in: trees are blocking in LoL-style maps.
+    /// Filtering by node name is the cheapest way to keep them out of the input
+    /// without splitting the GLB.
     /// </summary>
-    private static readonly string[] SkipNamePatterns = ["Foliage"];
+    private static readonly string[] SkipNamePatterns = ["Foliage", "JungleGrass"];
 
     public sealed record TriangleSoup(Vector3[] Vertices, int[] Indices)
     {
@@ -65,8 +68,8 @@ internal static class MeshExtractor
             foreach (var prim in mesh.Primitives)
             {
                 var posAcc = prim.GetVertexAccessor("POSITION")
-                    ?? throw new InvalidDataException(
-                        $"glTF primitive without POSITION in '{glbPath}'.");
+                    ?? throw new InvalidDataException($"glTF primitive without POSITION in '{glbPath}'.");
+
                 var positions = posAcc.AsVector3Array();
                 var src = prim.GetIndices();
 
@@ -75,6 +78,7 @@ internal static class MeshExtractor
                 {
                     verts.Add(Vector3.Transform(p, world));
                 }
+
                 for (var i = 0; i < src.Count; i++)
                 {
                     indices.Add(baseIndex + (int)src[i]);
@@ -99,6 +103,7 @@ internal static class MeshExtractor
                 return true;
             }
         }
+
         return false;
     }
 
@@ -111,13 +116,16 @@ internal static class MeshExtractor
         {
             return (Vector3.Zero, Vector3.Zero);
         }
+
         var min = soup.Vertices[0];
         var max = soup.Vertices[0];
+
         for (var i = 1; i < soup.Vertices.Length; i++)
         {
             min = Vector3.Min(min, soup.Vertices[i]);
             max = Vector3.Max(max, soup.Vertices[i]);
         }
+
         return (min, max);
     }
 }

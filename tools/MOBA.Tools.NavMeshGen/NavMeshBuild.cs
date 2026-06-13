@@ -52,7 +52,7 @@ internal static class NavMeshBuild
             verts[i * 3 + 1] = terrain.Vertices[i].Y;
             verts[i * 3 + 2] = terrain.Vertices[i].Z;
         }
-        var geom = new RcSampleInputGeomProvider(verts, terrain.Indices);
+        var geomProvider = new RcSampleInputGeomProvider(verts, terrain.Indices);
 
         // Towers + nexus become null-area convex polys so Recast carves holes there.
         foreach (var ob in obstacles)
@@ -64,36 +64,43 @@ internal static class NavMeshBuild
                 flat[i * 3 + 1] = ob.Polygon[i].Y;
                 flat[i * 3 + 2] = ob.Polygon[i].Z;
             }
-            geom.AddConvexVolume(flat, ob.YMin, ob.YMax, new RcAreaModification(AreaNullBlocked));
+
+            geomProvider.AddConvexVolume(flat, ob.YMin, ob.YMax, new RcAreaModification(AreaNullBlocked));
         }
 
         // 2. RcConfig + RcBuilderConfig
         var cfg = new RcConfig(
             RcPartition.WATERSHED,
-            CellSize, CellHeight,
-            AgentMaxSlopeDegrees, AgentHeight, AgentRadius, AgentMaxClimb,
-            RegionMinSize, RegionMergeSize,
-            EdgeMaxLen, EdgeMaxError,
+            CellSize,
+            CellHeight,
+            AgentMaxSlopeDegrees,
+            AgentHeight,
+            AgentRadius,
+            AgentMaxClimb,
+            RegionMinSize,
+            RegionMergeSize,
+            EdgeMaxLen,
+            EdgeMaxError,
             VertsPerPoly,
-            DetailSampleDist, DetailSampleMaxError,
+            DetailSampleDist,
+            DetailSampleMaxError,
             filterLowHangingObstacles: true,
             filterLedgeSpans: true,
             filterWalkableLowHeightSpans: true,
             WalkableMod,
             buildMeshDetail: true);
 
-        var bcfg = new RcBuilderConfig(cfg, geom.GetMeshBoundsMin(), geom.GetMeshBoundsMax());
+        var bcfg = new RcBuilderConfig(cfg, geomProvider.GetMeshBoundsMin(), geomProvider.GetMeshBoundsMax());
 
         // 3. Pipeline (rasterise → filter → compact → regions → contours → polymesh → detail).
         var builder = new RcBuilder();
-        var rcResult = builder.Build(geom, bcfg, keepInterResults: false);
+        var rcResult = builder.Build(geomProvider, bcfg, keepInterResults: false);
 
         var pmesh = rcResult.Mesh;
         var dmesh = rcResult.MeshDetail;
         if (pmesh is null || pmesh.npolys == 0)
         {
-            throw new InvalidOperationException(
-                "Recast produced an empty polymesh — terrain bounds or agent params likely wrong.");
+            throw new InvalidOperationException("Recast produced an empty polymesh — terrain bounds or agent params likely wrong.");
         }
 
         // 4. Mark every polygon as walkable (flag = WALK).
@@ -126,13 +133,14 @@ internal static class NavMeshBuild
             ch = CellHeight,
             buildBvTree = true,
         };
-        var meshData = DtNavMeshBuilder.CreateNavMeshData(option)
-            ?? throw new InvalidOperationException("DtNavMeshBuilder.CreateNavMeshData returned null.");
+
+        var meshData = DtNavMeshBuilder.CreateNavMeshData(option) ?? throw new InvalidOperationException("DtNavMeshBuilder.CreateNavMeshData returned null.");
 
         // 6. Initialise a DtNavMesh (single-tile) and serialise it with DtMeshSetWriter
         //    so the runtime loader can deserialise the same way.
         var navMesh = new DtNavMesh();
         var status = navMesh.Init(meshData, VertsPerPoly, 0);
+
         if (status.Failed())
         {
             throw new InvalidOperationException($"DtNavMesh.Init failed: {status.Value}");
@@ -140,7 +148,9 @@ internal static class NavMeshBuild
 
         using var ms = new MemoryStream();
         using var bw = new BinaryWriter(ms);
-        new DtMeshSetWriter().Write(bw, navMesh, RcByteOrder.LITTLE_ENDIAN, cCompatibility: false);
+
+        var meshSetWriter = new DtMeshSetWriter();
+        meshSetWriter.Write(bw, navMesh, RcByteOrder.LITTLE_ENDIAN, cCompatibility: false);
 
         var stats = new BuildStats(
             TerrainTriangles: terrain.TriangleCount,
@@ -149,6 +159,7 @@ internal static class NavMeshBuild
             VertexCount: pmesh.nverts,
             BoundsMin: new Vector3(pmesh.bmin.X, pmesh.bmin.Y, pmesh.bmin.Z),
             BoundsMax: new Vector3(pmesh.bmax.X, pmesh.bmax.Y, pmesh.bmax.Z));
+
         return (ms.ToArray(), stats);
     }
 
