@@ -7,20 +7,22 @@ namespace MOBA.Game.Client;
 /// <summary>
 /// Debug overlay for every player's currently-active server-replicated path.
 /// Modelled as a regular <see cref="Actor"/> with one <see cref="MeshRendererComponent"/>;
-/// per tick the actor scans the scene for <see cref="ReplicatedPathComponent"/>s,
-/// detects changes via the cheap aggregate-version checksum, and rebuilds the
-/// shared line mesh when something differs. F3 flips <see cref="IsVisible"/> —
-/// the line mesh continues being maintained while invisible (the per-actor cost
-/// is just a version sum), so toggling back on shows the current paths
-/// immediately.
+/// while visible, the actor rebuilds the shared line mesh every tick so the
+/// remaining-portion-of-the-path shrinks live as the player walks. Per player
+/// the rendered polyline goes <c>player.Transform.Position → next waypoint →
+/// last waypoint</c>: a perpendicular projection onto every segment picks the
+/// closest one, and only the waypoints after that segment are emitted. F3
+/// flips <see cref="IsVisible"/>; while invisible the actor does no work at all.
 /// </summary>
 public sealed class PathOverlayActor : Actor
 {
+    private const float YOffset = 0.05f;
+    private const float ArrivalThresholdSq = 0.25f * 0.25f;
+
     private readonly IGraphicsBackend _backend;
     private readonly Scene _scene;
     private readonly MeshRendererComponent _renderer;
     private IMesh _currentMesh;
-    private long _lastVersionChecksum = -1;
 
     public PathOverlayActor(IGraphicsBackend backend, Scene scene, Material pathMaterial)
     {
@@ -41,26 +43,10 @@ public sealed class PathOverlayActor : Actor
 
     protected override void UpdateActor(GameTime time)
     {
-        // Cheap checksum of all currently-known paths — a sum of (actorId * 1009 + version)
-        // detects waypoint changes (new path), actor spawns/despawns (set membership),
-        // and version bumps (in-place replacement) without diffing waypoint lists.
-        long checksum = 0;
-        foreach (var actor in _scene.Actors)
-        {
-            var path = actor.GetComponent<ReplicatedPathComponent>();
-            var netId = actor.GetComponent<NetworkIdentityComponent>();
-            if (path is null || netId is null || path.Waypoints.Count == 0)
-            {
-                continue;
-            }
-            checksum += netId.Id * 1009L + path.Version;
-        }
-
-        if (checksum == _lastVersionChecksum)
+        if (!_renderer.IsVisible)
         {
             return;
         }
-        _lastVersionChecksum = checksum;
         Rebuild();
     }
 
@@ -71,9 +57,6 @@ public sealed class PathOverlayActor : Actor
         var zeroUv = new Vector2D<float>(0f, 0f);
         var up = Vector3D<float>.UnitY;
 
-        // One open polyline per replicated path. Lifted slightly above ground so the
-        // line doesn't z-fight with the terrain or the F2 navmesh wireframe.
-        const float yOffset = 0.05f;
         foreach (var actor in _scene.Actors)
         {
             var path = actor.GetComponent<ReplicatedPathComponent>();
@@ -81,15 +64,38 @@ public sealed class PathOverlayActor : Actor
             {
                 continue;
             }
+
             var ws = path.Waypoints;
+            var pos = actor.Transform.Position;
+
+            // Hide the line entirely once the player is essentially at the
+            // destination — otherwise an idle player has a 0-length stub at
+            // the last waypoint sitting in the F3 overlay.
+            if ((ws[^1] - pos).LengthSquared <= ArrivalThresholdSq)
+            {
+                continue;
+            }
+
+            // Pick the segment whose perpendicular projection is closest to the
+            // current position — that's the segment the player is currently on.
+            // Render: player → next waypoint, then the remaining segments.
+            var closestIdx = 0;
+            var minDistSq = float.MaxValue;
             for (var i = 0; i < ws.Count - 1; i++)
             {
-                var a = ws[i] + new Vector3D<float>(0f, yOffset, 0f);
-                var b = ws[i + 1] + new Vector3D<float>(0f, yOffset, 0f);
-                indices.Add((uint)vertices.Count);
-                vertices.Add(new Vertex(a, zeroUv, up));
-                indices.Add((uint)vertices.Count);
-                vertices.Add(new Vertex(b, zeroUv, up));
+                var distSq = SquaredDistanceToSegment(pos, ws[i], ws[i + 1]);
+                if (distSq < minDistSq)
+                {
+                    minDistSq = distSq;
+                    closestIdx = i;
+                }
+            }
+
+            var lift = new Vector3D<float>(0f, YOffset, 0f);
+            EmitLine(vertices, indices, pos + lift, ws[closestIdx + 1] + lift, zeroUv, up);
+            for (var i = closestIdx + 1; i < ws.Count - 1; i++)
+            {
+                EmitLine(vertices, indices, ws[i] + lift, ws[i + 1] + lift, zeroUv, up);
             }
         }
 
@@ -97,5 +103,32 @@ public sealed class PathOverlayActor : Actor
         _currentMesh = _backend.CreateLineMesh(vertices.ToArray(), indices.ToArray());
         _renderer.ReplaceSingleMesh(_currentMesh);
         oldMesh.Dispose();
+    }
+
+    private static void EmitLine(
+        List<Vertex> vertices,
+        List<uint> indices,
+        Vector3D<float> a,
+        Vector3D<float> b,
+        Vector2D<float> zeroUv,
+        Vector3D<float> up)
+    {
+        indices.Add((uint)vertices.Count);
+        vertices.Add(new Vertex(a, zeroUv, up));
+        indices.Add((uint)vertices.Count);
+        vertices.Add(new Vertex(b, zeroUv, up));
+    }
+
+    private static float SquaredDistanceToSegment(Vector3D<float> p, Vector3D<float> a, Vector3D<float> b)
+    {
+        var ab = b - a;
+        var lenSq = Vector3D.Dot(ab, ab);
+        if (lenSq <= 0f)
+        {
+            return (p - a).LengthSquared;
+        }
+        var t = Math.Clamp(Vector3D.Dot(p - a, ab) / lenSq, 0f, 1f);
+        var closest = a + ab * t;
+        return (p - closest).LengthSquared;
     }
 }
