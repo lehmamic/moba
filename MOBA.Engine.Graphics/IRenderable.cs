@@ -10,4 +10,11 @@ namespace MOBA.Engine.Graphics;
 public interface IRenderable
 {
     IReadOnlyList<ModelPart> Parts { get; }
+
+    /// <summary>
+    /// When false, the renderer skips every part of this component for the current
+    /// frame. Defaults to true so existing implementations don't have to opt in.
+    /// Used today to suppress mob rendering while NavMesh-only iterations land.
+    /// </summary>
+    bool IsVisible => true;
 }

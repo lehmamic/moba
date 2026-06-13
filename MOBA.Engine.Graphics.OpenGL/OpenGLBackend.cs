@@ -24,6 +24,9 @@ public sealed class OpenGLBackend : IGraphicsBackend
     public IMesh CreateMesh(ReadOnlySpan<Vertex> vertices, ReadOnlySpan<uint> indices) =>
         new OpenGLMesh(_gl, vertices, indices);
 
+    public IMesh CreateLineMesh(ReadOnlySpan<Vertex> vertices, ReadOnlySpan<uint> indices) =>
+        new OpenGLMesh(_gl, vertices, indices, PrimitiveType.Lines);
+
     public ISkinnedMesh CreateSkinnedMesh(ReadOnlySpan<SkinnedVertex> vertices, ReadOnlySpan<uint> indices) =>
         new OpenGLSkinnedMesh(_gl, vertices, indices);
 

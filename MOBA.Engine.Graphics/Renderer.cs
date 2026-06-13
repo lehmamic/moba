@@ -42,7 +42,7 @@ public sealed class Renderer
         {
             foreach (var component in actor.Components)
             {
-                if (component is not IRenderable renderable)
+                if (component is not IRenderable renderable || !renderable.IsVisible)
                 {
                     continue;
                 }
@@ -69,7 +69,7 @@ public sealed class Renderer
         {
             foreach (var component in actor.Components)
             {
-                if (component is not ISkinnedRenderable skinned)
+                if (component is not ISkinnedRenderable skinned || !skinned.IsVisible)
                 {
                     continue;
                 }

@@ -26,4 +26,10 @@ public sealed class MeshRendererComponent : Component, IRenderable
         => Parts = [.. model.Parts.Select(p => new ModelPart(p.Mesh, materialOverride, p.LocalTransform))];
 
     public IReadOnlyList<ModelPart> Parts { get; }
+
+    /// <summary>
+    /// Mutable visibility flag — the renderer skips this component's parts when false.
+    /// Used today to suppress mob rendering while only NavMesh-relevant entities should draw.
+    /// </summary>
+    public bool IsVisible { get; set; } = true;
 }

@@ -6,6 +6,14 @@ public interface IGraphicsBackend : IDisposable
 {
     IMesh CreateMesh(ReadOnlySpan<Vertex> vertices, ReadOnlySpan<uint> indices);
 
+    /// <summary>
+    /// Variant of <see cref="CreateMesh"/> that draws each index pair as a line
+    /// segment instead of triangles. Used by the F2 navmesh wireframe overlay —
+    /// per-vertex UV and Normal are ignored by the unlit wireframe shader, so
+    /// callers can leave them zeroed.
+    /// </summary>
+    IMesh CreateLineMesh(ReadOnlySpan<Vertex> vertices, ReadOnlySpan<uint> indices);
+
     ISkinnedMesh CreateSkinnedMesh(ReadOnlySpan<SkinnedVertex> vertices, ReadOnlySpan<uint> indices);
 
     ITexture CreateTexture(ReadOnlySpan<byte> pixelsRgba, int width, int height);

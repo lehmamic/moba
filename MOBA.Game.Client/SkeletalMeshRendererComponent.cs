@@ -70,6 +70,11 @@ public sealed class SkeletalMeshRendererComponent : Component, ISkinnedRenderabl
 
     public IReadOnlyList<ModelPart> Parts { get; }
 
+    /// <summary>
+    /// Mutable visibility flag — the renderer skips this component's parts when false.
+    /// </summary>
+    public bool IsVisible { get; set; } = true;
+
     public MatrixPalette Palette { get; }
 
     public Animation CurrentClip { get; private set; }

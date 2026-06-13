@@ -8,11 +8,17 @@ internal sealed class OpenGLMesh : IMesh
     private readonly uint _vao;
     private readonly uint _vbo;
     private readonly uint _ebo;
+    private readonly PrimitiveType _primitive;
 
     public int IndexCount { get; }
 
-    public OpenGLMesh(GL gl, ReadOnlySpan<Vertex> vertices, ReadOnlySpan<uint> indices)
+    public OpenGLMesh(
+        GL gl,
+        ReadOnlySpan<Vertex> vertices,
+        ReadOnlySpan<uint> indices,
+        PrimitiveType primitive = PrimitiveType.Triangles)
     {
+        _primitive = primitive;
         _gl = gl;
         IndexCount = indices.Length;
 
@@ -49,7 +55,7 @@ internal sealed class OpenGLMesh : IMesh
     {
         _gl.BindVertexArray(_vao);
         // The void* is an offset into the bound element-array buffer, not a client pointer.
-        _gl.DrawElements(PrimitiveType.Triangles, (uint)IndexCount, DrawElementsType.UnsignedInt, (void*)0);
+        _gl.DrawElements(_primitive, (uint)IndexCount, DrawElementsType.UnsignedInt, (void*)0);
         _gl.BindVertexArray(0);
     }
 
