@@ -1,0 +1,27 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <OutputType>Exe</OutputType>
+        <IsPackable>false</IsPackable>
+        <!--
+          Out-of-game build tool. Generates assets/maps/*.navmesh from the dimension-rift
+          terrain GLB and the tower obstacle list — runtime code (server + client) loads
+          that file via MOBA.Game/NavMesh.cs. Re-run the tool whenever the terrain or the
+          building positions change.
+        -->
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="DotRecast.Recast" />
+        <PackageReference Include="DotRecast.Detour" />
+        <PackageReference Include="SharpGLTF.Core" />
+        <PackageReference Include="Silk.NET.Maths" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <!-- Reuse the MapDefinition / BuildingDef / TransformDef records so the tool reads
+             the same JSON schema the game does. -->
+        <ProjectReference Include="..\..\MOBA.Game\MOBA.Game.csproj" />
+    </ItemGroup>
+
+</Project>

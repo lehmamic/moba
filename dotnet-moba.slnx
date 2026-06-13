@@ -11,4 +11,5 @@
   <Project Path="MOBA.Client/MOBA.Client.csproj" />
   <Project Path="tests/MOBA.Architecture.Tests/MOBA.Architecture.Tests.csproj" />
   <Project Path="tests/MOBA.Utilities.Tests/MOBA.Utilities.Tests.csproj" />
+  <Project Path="tools/MOBA.Tools.NavMeshGen/MOBA.Tools.NavMeshGen.csproj" />
 </Solution>
