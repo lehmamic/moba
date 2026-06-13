@@ -124,7 +124,13 @@ public sealed class ClientGame : GameHost
                     _ = new MeshRendererComponent(building, _assets.LoadModel(building.Definition.MeshAsset));
                     break;
                 case MonsterActor monster:
-                    _ = new MeshRendererComponent(monster, _assets.LoadModel(monster.Definition.MeshAsset));
+                    // Monsters render-off for now: they're loaded so they exist in the
+                    // scene (and stay out of the navmesh), but the NavMesh iteration
+                    // wants a clean look while paths + obstacles are validated.
+                    _ = new MeshRendererComponent(monster, _assets.LoadModel(monster.Definition.MeshAsset))
+                    {
+                        IsVisible = false,
+                    };
                     break;
             }
         }
@@ -139,6 +145,14 @@ public sealed class ClientGame : GameHost
             _cameraSwitcher,
             navMesh);
 
+        // F2 debug overlay — modelled as a regular actor so the existing two-pass
+        // renderer draws it without any special hook. DebugOverlaySystem only owns
+        // the keybinding and flips the renderer's IsVisible flag.
+        var wireframeMaterial = new Material(_assets.LoadShader("wireframe"));
+        var navMeshOverlayActor = new NavMeshOverlayActor(_backend, navMesh, wireframeMaterial);
+        Game.Scene.AddActor(navMeshOverlayActor);
+        var debugOverlay = new DebugOverlaySystem(_input.Context, navMeshOverlayActor.Renderer);
+
         // Order matters: transport before sync so MessageReceived events fire
         // after polling. NetworkSyncSystem.OnInitialize sends the Join message
         // — by then RiptideClientTransport's blocking OnInitialize has already
@@ -148,11 +162,12 @@ public sealed class ClientGame : GameHost
         AddSystem(transport);
         AddSystem(syncSystem);
         AddSystem(_cameraSwitcher);
+        AddSystem(debugOverlay);
         Initialize();
 
         _backend.Resize(_window.FramebufferSize.X, _window.FramebufferSize.Y);
 
-        Console.WriteLine("[MOBA.Client] Loaded. LMB = move player, F1 = camera toggle, RMB+drag = look, WASD/QE = free-fly.");
+        Console.WriteLine("[MOBA.Client] Loaded. LMB = move player, F1 = camera toggle, F2 = navmesh overlay, RMB+drag = look, WASD/QE = free-fly.");
     }
 
     private void OnFramebufferResize(Vector2D<int> size)
