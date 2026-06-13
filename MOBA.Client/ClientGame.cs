@@ -72,6 +72,7 @@ public sealed class ClientGame : GameHost
         _assets.AddMeshCache(_backend);
         _assets.AddModelCache(_backend, assetsRoot);
         _assets.AddMapCache(mapsRoot);
+        _assets.AddNavMeshCache(mapsRoot);
 
         var aspectRatio = (float)_window.FramebufferSize.X / _window.FramebufferSize.Y;
         _cameraSwitcher = new CameraSwitcher(_input.Context, aspectRatio);
@@ -96,8 +97,12 @@ public sealed class ClientGame : GameHost
 
         var map = Map.FromDefinition(_assets.LoadMap("dimension-rift.json"));
         var terrainModel = _assets.LoadModel($"maps/{map.TerrainMesh}");
+        // Generated out-of-game by tools/MOBA.Tools.NavMeshGen. Client uses it for
+        // pre-send target snap + F2 debug overlay; server validates the same data.
+        var navMesh = _assets.LoadNavMesh(map.NavMesh);
+        Console.WriteLine($"[MOBA.Client] navmesh polys = {navMesh.PolyCount}");
 
-        var world = new MobaWorld(map);
+        var world = new MobaWorld(map, navMesh);
         world.Populate(Game.Scene);
 
         // Attach renderers to the pre-spawned static actors: the ground plus
@@ -131,7 +136,8 @@ public sealed class ClientGame : GameHost
             _assets,
             markerMaterial,
             knight,
-            _cameraSwitcher);
+            _cameraSwitcher,
+            navMesh);
 
         // Order matters: transport before sync so MessageReceived events fire
         // after polling. NetworkSyncSystem.OnInitialize sends the Join message

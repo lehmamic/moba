@@ -28,13 +28,15 @@ public sealed class MovementSystem : IEngineSystem, IPostUpdateSystem
     private readonly Scene _scene;
     private readonly IServerNetTransport _transport;
     private readonly PlayerConnectionSystem _connections;
+    private readonly NavMesh _navMesh;
     private uint _nextMarkerId = FirstMarkerId;
 
-    public MovementSystem(Scene scene, IServerNetTransport transport, PlayerConnectionSystem connections)
+    public MovementSystem(Scene scene, IServerNetTransport transport, PlayerConnectionSystem connections, NavMesh navMesh)
     {
         _scene = scene;
         _transport = transport;
         _connections = connections;
+        _navMesh = navMesh;
     }
 
     public void OnInitialize() => _transport.MessageReceived += OnMessageReceived;
@@ -105,16 +107,25 @@ public sealed class MovementSystem : IEngineSystem, IPostUpdateSystem
             return;
         }
 
+        // Snap the requested target to the navmesh — server is authoritative, so
+        // even if the client already snapped before sending we re-validate here.
+        // A click that lands off-mesh (deep skybox, hidden tower footprint outside
+        // the search box) is rejected wholesale: the player stays put.
+        var requested = new Vector3D<float>(command.TargetX, actor.Transform.Position.Y, command.TargetZ);
+        if (!_navMesh.TryFindNearestPoint(requested, out var target))
+        {
+            return;
+        }
+
         if (moveTarget.MarkerId is { } oldMarkerId)
         {
             DespawnMarker(oldMarkerId);
         }
 
-        var target = new Vector3D<float>(command.TargetX, actor.Transform.Position.Y, command.TargetZ);
         moveTarget.Target = target;
 
         var markerId = _nextMarkerId++;
-        var markerPosition = new Vector3D<float>(command.TargetX, 0.5f, command.TargetZ);
+        var markerPosition = new Vector3D<float>(target.X, 0.5f, target.Z);
         var marker = new MarkerActor(markerId, markerPosition);
         _scene.AddActor(marker);
         moveTarget.MarkerId = markerId;

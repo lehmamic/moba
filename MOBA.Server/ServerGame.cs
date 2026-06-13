@@ -25,11 +25,16 @@ public sealed class ServerGame : GameHost
         var assets = new AssetManager();
         var mapsRoot = AbsolutePath.AppBaseDirectory / "assets" / "maps";
         assets.AddMapCache(mapsRoot);
+        assets.AddNavMeshCache(mapsRoot);
         AddSystem(assets);
 
         var map = Map.FromDefinition(assets.LoadMap("dimension-rift.json"));
+        // Generated out-of-game by tools/MOBA.Tools.NavMeshGen. Server is authoritative
+        // for movement validation, so the navmesh load is mandatory.
+        var navMesh = assets.LoadNavMesh(map.NavMesh);
+        Console.WriteLine($"[MOBA.Server] navmesh polys = {navMesh.PolyCount}");
 
-        var world = new MobaWorld(map);
+        var world = new MobaWorld(map, navMesh);
         world.Populate(Game.Scene);
 
         // Order matters: transport first so subsequent systems can subscribe
@@ -40,7 +45,7 @@ public sealed class ServerGame : GameHost
         AddSystem(transport);
         var connections = new PlayerConnectionSystem(Game.Scene, transport);
         AddSystem(connections);
-        AddSystem(new MovementSystem(Game.Scene, transport, connections));
+        AddSystem(new MovementSystem(Game.Scene, transport, connections, navMesh));
     }
 
     public void Run()

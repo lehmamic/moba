@@ -23,4 +23,20 @@ public static class AssetManagerExtensions
 
     public static MapDefinition LoadMap(this AssetManager assets, string filename) =>
         assets.Cache<string, MapDefinition>().GetOrLoad(filename);
+
+    /// <summary>
+    /// Registers a navmesh cache keyed by filename (e.g. <c>dimension-rift.navmesh</c>)
+    /// under <paramref name="mapsRoot"/>. The on-disk blob is generated out-of-game
+    /// by <c>tools/MOBA.Tools.NavMeshGen</c>; both server and client load via this
+    /// cache so the AssetManager owns the lifetime of every navmesh just like every
+    /// other game asset.
+    /// </summary>
+    public static AssetCache<string, NavMesh> AddNavMeshCache(
+        this AssetManager assets,
+        AbsolutePath mapsRoot) =>
+        assets.AddCache<string, NavMesh>(filename =>
+            NavMesh.Load(mapsRoot / filename));
+
+    public static NavMesh LoadNavMesh(this AssetManager assets, string filename) =>
+        assets.Cache<string, NavMesh>().GetOrLoad(filename);
 }

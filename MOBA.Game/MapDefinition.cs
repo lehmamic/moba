@@ -18,6 +18,7 @@ public sealed record MapDefinition(
     float Length,
     AttributionDef? Attribution = null,
     string? TerrainMesh = null,
+    string? NavMesh = null,
     IReadOnlyList<BuildingDef>? Buildings = null,
     IReadOnlyList<MonsterDef>? Monsters = null);
 

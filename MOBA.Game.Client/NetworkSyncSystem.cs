@@ -30,6 +30,7 @@ public sealed class NetworkSyncSystem : IEngineSystem
     private readonly Material _markerMaterial;
     private readonly Model _playerModel;
     private readonly CameraSwitcher _cameras;
+    private readonly NavMesh _navMesh;
     private readonly Dictionary<uint, Actor> _actorsById = [];
     private uint? _localPlayerNetworkId;
 
@@ -39,7 +40,8 @@ public sealed class NetworkSyncSystem : IEngineSystem
         AssetManager assets,
         Material markerMaterial,
         Model playerModel,
-        CameraSwitcher cameras)
+        CameraSwitcher cameras,
+        NavMesh navMesh)
     {
         _scene = scene;
         _transport = transport;
@@ -47,6 +49,7 @@ public sealed class NetworkSyncSystem : IEngineSystem
         _markerMaterial = markerMaterial;
         _playerModel = playerModel;
         _cameras = cameras;
+        _navMesh = navMesh;
     }
 
     public void OnInitialize()
@@ -106,7 +109,7 @@ public sealed class NetworkSyncSystem : IEngineSystem
             && actor is PlayerActor player
             && player.GetComponent<LocalPlayerInputComponent>() is null)
         {
-            _ = new LocalPlayerInputComponent(player, _cameras, _transport);
+            _ = new LocalPlayerInputComponent(player, _cameras, _transport, _navMesh);
         }
     }
 
@@ -139,7 +142,7 @@ public sealed class NetworkSyncSystem : IEngineSystem
         _ = new SkeletalMeshRendererComponent(player, _playerModel);
         if (_localPlayerNetworkId == message.Id)
         {
-            _ = new LocalPlayerInputComponent(player, _cameras, _transport);
+            _ = new LocalPlayerInputComponent(player, _cameras, _transport, _navMesh);
         }
         _scene.AddActor(player);
         _actorsById[message.Id] = player;

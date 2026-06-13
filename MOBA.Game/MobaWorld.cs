@@ -10,9 +10,15 @@ namespace MOBA.Game;
 /// </summary>
 public sealed class MobaWorld
 {
-    public MobaWorld(Map map) => Map = map;
+    public MobaWorld(Map map, NavMesh navMesh)
+    {
+        Map = map;
+        NavMesh = navMesh;
+    }
 
     public Map Map { get; }
+
+    public NavMesh NavMesh { get; }
 
     public void Populate(Scene scene)
     {
