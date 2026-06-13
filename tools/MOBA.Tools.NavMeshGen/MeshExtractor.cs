@@ -11,6 +11,16 @@ namespace MOBA.Tools.NavMeshGen;
 /// </summary>
 internal static class MeshExtractor
 {
+    /// <summary>
+    /// Substrings (case-insensitive) of node names whose geometry must NOT enter the
+    /// navmesh input. The terrain GLB packs grass tufts and other foliage as separate
+    /// nodes ("PGD_M_20FoliageGroup_*", "...FoliageGroupR_*"); their small upright
+    /// silhouettes get rasterised as ledge spans by Recast and turn into impassable
+    /// pillars — but visually they are clearly walk-through. Filtering by node name
+    /// is the cheapest way to keep them out of the input without splitting the GLB.
+    /// </summary>
+    private static readonly string[] SkipNamePatterns = ["Foliage"];
+
     public sealed record TriangleSoup(Vector3[] Vertices, int[] Indices)
     {
         public int TriangleCount => Indices.Length / 3;
@@ -20,12 +30,15 @@ internal static class MeshExtractor
     /// Loads every primitive of every node-with-mesh in the file, transforms positions
     /// by the node's world matrix, concatenates into a single (positions, indices)
     /// pair. The glTF Y-up convention is preserved — Recast expects Y-up too.
+    /// Nodes whose name matches <see cref="SkipNamePatterns"/> are skipped wholesale.
     /// </summary>
     public static TriangleSoup Load(string glbPath)
     {
         var model = ModelRoot.Load(glbPath);
         var verts = new List<Vector3>();
         var indices = new List<int>();
+        var skippedNodes = 0;
+        var skippedTris = 0;
 
         foreach (var node in model.LogicalNodes)
         {
@@ -34,8 +47,21 @@ internal static class MeshExtractor
             {
                 continue;
             }
-            var world = node.WorldMatrix;
 
+            var name = node.Name ?? string.Empty;
+            if (IsSkipped(name))
+            {
+                var skip = 0;
+                foreach (var prim in mesh.Primitives)
+                {
+                    skip += prim.GetIndices().Count / 3;
+                }
+                skippedNodes++;
+                skippedTris += skip;
+                continue;
+            }
+
+            var world = node.WorldMatrix;
             foreach (var prim in mesh.Primitives)
             {
                 var posAcc = prim.GetVertexAccessor("POSITION")
@@ -56,7 +82,24 @@ internal static class MeshExtractor
             }
         }
 
+        if (skippedNodes > 0)
+        {
+            Console.WriteLine($"[extract] skipped {skippedNodes} nodes / {skippedTris} tris matching {{{string.Join(",", SkipNamePatterns)}}}");
+        }
+
         return new TriangleSoup(verts.ToArray(), indices.ToArray());
+    }
+
+    private static bool IsSkipped(string name)
+    {
+        foreach (var pat in SkipNamePatterns)
+        {
+            if (name.Contains(pat, StringComparison.OrdinalIgnoreCase))
+            {
+                return true;
+            }
+        }
+        return false;
     }
 
     /// <summary>
