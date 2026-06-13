@@ -7,19 +7,18 @@ namespace MOBA.Game.Client;
 /// Debug-key dispatcher (client-only). Listens for keyboard events on the same
 /// input context the rest of the client uses, and toggles debug overlays in
 /// response. Today it owns F2 ↔ navmesh wireframe; more flags can add their own
-/// key bindings here. The overlay is a regular scene actor — this system holds
-/// only its <see cref="MeshRendererComponent"/> reference and flips
-/// <see cref="MeshRendererComponent.IsVisible"/>.
+/// key bindings here. The overlay is a regular scene actor — this system flips
+/// its <see cref="NavMeshOverlayActor.IsVisible"/> passthrough.
 /// </summary>
 public sealed class DebugOverlaySystem : IEngineSystem
 {
     private readonly IKeyboard _keyboard;
-    private readonly MeshRendererComponent _navMeshRenderer;
+    private readonly NavMeshOverlayActor _navMeshOverlay;
 
-    public DebugOverlaySystem(IInputContext input, MeshRendererComponent navMeshRenderer)
+    public DebugOverlaySystem(IInputContext input, NavMeshOverlayActor navMeshOverlay)
     {
         _keyboard = input.Keyboards[0];
-        _navMeshRenderer = navMeshRenderer;
+        _navMeshOverlay = navMeshOverlay;
         _keyboard.KeyDown += OnKeyDown;
     }
 
@@ -35,7 +34,7 @@ public sealed class DebugOverlaySystem : IEngineSystem
     {
         if (key == Key.F2)
         {
-            _navMeshRenderer.IsVisible = !_navMeshRenderer.IsVisible;
+            _navMeshOverlay.IsVisible = !_navMeshOverlay.IsVisible;
         }
     }
 }

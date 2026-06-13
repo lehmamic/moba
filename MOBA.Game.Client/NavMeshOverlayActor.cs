@@ -7,24 +7,30 @@ namespace MOBA.Game.Client;
 /// <summary>
 /// Debug overlay for the runtime <see cref="NavMesh"/> — modelled as a regular
 /// <see cref="Actor"/> with one <see cref="MeshRendererComponent"/>, so the F2
-/// toggle is just a flip of the renderer's <see cref="MeshRendererComponent.IsVisible"/>
-/// flag and the existing two-pass renderer draws it without any special hook.
-/// The edge mesh is uploaded once at construction; the navmesh shape never
-/// changes at runtime, so a static line mesh is sufficient.
+/// toggle is just a flip of <see cref="IsVisible"/> and the existing two-pass
+/// renderer draws it without any special hook. The edge mesh is uploaded once
+/// at construction; the navmesh shape never changes at runtime, so a static
+/// line mesh is sufficient.
 /// </summary>
 public sealed class NavMeshOverlayActor : Actor
 {
+    private readonly MeshRendererComponent _renderer;
+
     public NavMeshOverlayActor(IGraphicsBackend backend, NavMesh navMesh, Material wireframeMaterial)
     {
         var lineMesh = BuildLineMesh(backend, navMesh);
-        Renderer = new MeshRendererComponent(this, lineMesh, wireframeMaterial)
+        _renderer = new MeshRendererComponent(this, lineMesh, wireframeMaterial)
         {
             IsVisible = false,
         };
     }
 
-    /// <summary>The component the F2 toggle flips — kept as a typed handle to avoid a GetComponent lookup.</summary>
-    public MeshRendererComponent Renderer { get; }
+    /// <summary>Passthrough to the single renderer component — F2 flips this.</summary>
+    public bool IsVisible
+    {
+        get => _renderer.IsVisible;
+        set => _renderer.IsVisible = value;
+    }
 
     private static IMesh BuildLineMesh(IGraphicsBackend backend, NavMesh navMesh)
     {

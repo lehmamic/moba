@@ -151,7 +151,7 @@ public sealed class ClientGame : GameHost
         var wireframeMaterial = new Material(_assets.LoadShader("wireframe"));
         var navMeshOverlayActor = new NavMeshOverlayActor(_backend, navMesh, wireframeMaterial);
         Game.Scene.AddActor(navMeshOverlayActor);
-        var debugOverlay = new DebugOverlaySystem(_input.Context, navMeshOverlayActor.Renderer);
+        var debugOverlay = new DebugOverlaySystem(_input.Context, navMeshOverlayActor);
 
         // Order matters: transport before sync so MessageReceived events fire
         // after polling. NetworkSyncSystem.OnInitialize sends the Join message
