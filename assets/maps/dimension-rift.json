@@ -8,6 +8,7 @@
     "LicenseURL": "https://creativecommons.org/licenses/by-nc/4.0/"
   },
   "TerrainMesh": "dimension-rift",
+  "NavMesh": "dimension-rift.navmesh",
   "Buildings": [
     {
       "Id": "blue_nexus",
