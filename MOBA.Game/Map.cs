@@ -13,7 +13,7 @@ public sealed class Map
     public Map(
         float width,
         float length,
-        string terrainMesh = "default-terrain",
+        string terrainMesh = "dimension-rift",
         IReadOnlyList<Building>? buildings = null,
         IReadOnlyList<Monster>? monsters = null)
     {
@@ -39,7 +39,7 @@ public sealed class Map
         new(
             definition.Width,
             definition.Length,
-            definition.TerrainMesh ?? "default-terrain",
+            definition.TerrainMesh ?? "dimension-rift",
             (definition.Buildings ?? []).Select(Building.FromDefinition).ToList(),
             (definition.Monsters ?? []).Select(Monster.FromDefinition).ToList());
 
