@@ -13,4 +13,6 @@ public sealed record MapDefinition(
     float Length,
     AttributionDefinition? Attribution = null,
     string? TerrainMesh = null,
-    string? NavMesh = null);
+    string? NavMesh = null,
+    float[]? BoundsMin = null,
+    float[]? BoundsMax = null);

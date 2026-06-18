@@ -14,13 +14,17 @@ public sealed class CameraSwitcher : IEngineSystem
 {
     private readonly IKeyboard _keyboard;
 
-    public CameraSwitcher(IInputContext input, float aspectRatio, CamerasDefinition? config = null)
+    public CameraSwitcher(
+        IInputContext input,
+        float aspectRatio,
+        Func<Silk.NET.Maths.Vector2D<int>> viewportSizePixels,
+        CamerasDefinition? config = null)
     {
         FreeFly = new FreeFlyCameraController(input, aspectRatio, config?.FreeFly);
-        TopDown = new TopDownCameraController(aspectRatio, config?.TopDown);
-        ActiveCamera = string.Equals(config?.Default, "TopDown", StringComparison.OrdinalIgnoreCase)
-            ? TopDown.Camera
-            : FreeFly.Camera;
+        TopDown = new TopDownCameraController(input, aspectRatio, viewportSizePixels, config?.TopDown);
+        ActiveCamera = string.Equals(config?.Default, "FreeFly", StringComparison.OrdinalIgnoreCase)
+            ? FreeFly.Camera
+            : TopDown.Camera;
 
         _keyboard = input.Keyboards[0];
         _keyboard.KeyDown += OnKeyDown;
@@ -34,8 +38,17 @@ public sealed class CameraSwitcher : IEngineSystem
 
     public void Update(float deltaSeconds)
     {
-        FreeFly.Update(deltaSeconds);
-        TopDown.Update(deltaSeconds);
+        // Only the active controller gets to tick — otherwise the inactive
+        // camera silently drifts (WASD moves the FreeFly camera while the
+        // player is looking through TopDown, etc.).
+        if (ReferenceEquals(ActiveCamera, FreeFly.Camera))
+        {
+            FreeFly.Update(deltaSeconds);
+        }
+        else
+        {
+            TopDown.Update(deltaSeconds);
+        }
     }
 
     public void UpdateAspect(float aspectRatio)

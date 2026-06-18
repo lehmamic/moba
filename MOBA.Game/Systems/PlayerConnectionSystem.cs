@@ -97,9 +97,10 @@ public sealed class PlayerConnectionSystem : IEngineSystem
             return;
         }
 
+        var team = AssignTeam();
         var networkId = _nextPlayerNetworkId++;
-        var spawnPosition = NextSpawnPosition();
-        var actor = new PlayerActor(spawnPosition);
+        var spawnPosition = SpawnPositionFor(team);
+        var actor = new PlayerActor(spawnPosition, team?.Name ?? "Unassigned");
         _ = new NetworkIdentityComponent(actor, networkId);
         _ = new MoveTargetComponent(actor);
         _scene.AddActor(actor);
@@ -132,7 +133,7 @@ public sealed class PlayerConnectionSystem : IEngineSystem
             _transport.SendTo(sender, NetChannel.Reliable, catchUp.Serialize());
         }
 
-        Console.WriteLine($"[MOBA.Server] player {networkId} spawned for client {sender}");
+        Console.WriteLine($"[MOBA.Server] player {networkId} spawned for client {sender} on team {actor.Team}");
     }
 
     private void OnClientDisconnected(NetClientId client)
@@ -150,11 +151,57 @@ public sealed class PlayerConnectionSystem : IEngineSystem
         Console.WriteLine($"[MOBA.Server] player {id} despawned (client {client} left)");
     }
 
-    private Vector3D<float> NextSpawnPosition()
+    /// <summary>
+    /// Picks the underpopulated team for the new player; ties broken by a
+    /// random coin flip. If no <see cref="TeamActor"/> lives in the scene
+    /// (smoke-test scenes), returns null and the caller falls back to a
+    /// neutral spawn.
+    /// </summary>
+    private TeamActor? AssignTeam()
     {
-        // Lay out players along the X axis: slot 0 at x=0, slot 1 at x=+3,
-        // slot 2 at x=-3, slot 3 at x=+6, … Centred so the first players land
-        // near the middle of the map.
+        var teams = _scene.Actors.OfType<TeamActor>().ToList();
+        if (teams.Count == 0)
+        {
+            return null;
+        }
+        var counts = teams.ToDictionary(t => t, _ => 0);
+        foreach (var p in _actorByClient.Values)
+        {
+            var match = teams.FirstOrDefault(t => string.Equals(t.Name, p.Team, StringComparison.Ordinal));
+            if (match is not null)
+            {
+                counts[match]++;
+            }
+        }
+        var min = counts.Values.Min();
+        var candidates = counts.Where(kv => kv.Value == min).Select(kv => kv.Key).ToList();
+        return candidates[Random.Shared.Next(candidates.Count)];
+    }
+
+    /// <summary>
+    /// Drops the player near their team's spawn-area centre; multiple
+    /// players on the same team fan out along the X axis so they don't
+    /// stack. When <paramref name="team"/> is null, falls back to the old
+    /// origin-relative slotting (smoke-test scenes with no teams).
+    /// </summary>
+    private Vector3D<float> SpawnPositionFor(TeamActor? team)
+    {
+        if (team is null)
+        {
+            return NeutralSpawnSlot();
+        }
+        var teamCount = _actorByClient.Values.Count(p =>
+            string.Equals(p.Team, team.Name, StringComparison.Ordinal));
+        var direction = (teamCount % 2 == 0) ? 1 : -1;
+        var offset = ((teamCount + 1) / 2) * SpawnSlotSpacing * direction;
+        return new Vector3D<float>(
+            team.SpawnAreaCenter.X + offset,
+            team.SpawnAreaCenter.Y,
+            team.SpawnAreaCenter.Z);
+    }
+
+    private Vector3D<float> NeutralSpawnSlot()
+    {
         var slot = _nextSpawnSlot++;
         var direction = (slot % 2 == 0) ? 1 : -1;
         var offset = ((slot + 1) / 2) * SpawnSlotSpacing * direction;

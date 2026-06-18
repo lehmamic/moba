@@ -28,7 +28,7 @@
     }
   },
   "Cameras": {
-    "Default": "FreeFly",
+    "Default": "TopDown",
     "FreeFly": {
       "Position": [
         0,
@@ -42,8 +42,8 @@
     "TopDown": {
       "Position": [
         0,
-        60,
-        30
+        25,
+        17
       ],
       "Target": [
         0,
@@ -54,6 +54,30 @@
     }
   },
   "Actors": [
+    {
+      "Type": "Team",
+      "Id": "blue_team",
+      "Properties": {
+        "Name": "Blue",
+        "SpawnAreaCenter": [
+          82.27,
+          1,
+          -77.9
+        ]
+      }
+    },
+    {
+      "Type": "Team",
+      "Id": "red_team",
+      "Properties": {
+        "Name": "Red",
+        "SpawnAreaCenter": [
+          -68.84,
+          1,
+          73.06
+        ]
+      }
+    },
     {
       "Type": "Map",
       "Id": "map",
@@ -67,7 +91,15 @@
           "LicenseURL": "https://creativecommons.org/licenses/by-nc/4.0/"
         },
         "TerrainMesh": "dimension-rift",
-        "NavMesh": "dimension-rift.navmesh"
+        "NavMesh": "dimension-rift.navmesh",
+        "BoundsMin": [
+          -60,
+          -70
+        ],
+        "BoundsMax": [
+          75,
+          72
+        ]
       }
     },
     {

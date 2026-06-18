@@ -11,12 +11,21 @@ namespace MOBA.Game.Actors;
 /// <see cref="Messages.ActorKind.Player"/>. The local client's player gets
 /// a <c>LocalPlayerInputComponent</c> attached (client-side); remote players
 /// stay visual + position-driven only.
+///
+/// <para>
+/// <see cref="Team"/> is the team name (<c>"Blue"</c> / <c>"Red"</c>) the
+/// server assigned at join time. Used for spawn placement today; future
+/// damage routing, projectile filtering and HUD colouring will read it too.
+/// </para>
 /// </summary>
 public sealed class PlayerActor : Actor
 {
-    public PlayerActor(Vector3D<float> spawnPosition)
+    public PlayerActor(Vector3D<float> spawnPosition, string team)
     {
+        Team = team;
         Transform.Position = spawnPosition;
         _ = new TransformComponent(this);
     }
+
+    public string Team { get; }
 }

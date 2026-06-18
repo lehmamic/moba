@@ -90,7 +90,7 @@ public sealed class ClientGame : GameHost
         var sceneDef = _assets.LoadScene("dimension-rift.json");
 
         var aspectRatio = (float)_window.FramebufferSize.X / _window.FramebufferSize.Y;
-        _cameraSwitcher = new CameraSwitcher(_input.Context, aspectRatio, sceneDef.Cameras);
+        _cameraSwitcher = new CameraSwitcher(_input.Context, aspectRatio, () => _window.FramebufferSize, sceneDef.Cameras);
 
         var markerMaterial = new Material(_assets.LoadShader("phong_textured"), _assets.LoadTexture("marker_magenta.png"));
 
@@ -106,6 +106,7 @@ public sealed class ClientGame : GameHost
             new ClientMapActorFactory(_assets),
             new ClientBuildingActorFactory(_assets),
             new ClientMonsterActorFactory(_assets),
+            new TeamActorFactory(),
         ]);
         var sceneManager = new SceneManager(Game.Scene, BuildClientGameScene);
         AddSystem(sceneManager);
@@ -139,7 +140,9 @@ public sealed class ClientGame : GameHost
         }
 
         sceneManager.LoadScene(sceneDef);
-        var navMesh = Game.Scene.GetActor<MapActor>()!.NavMesh;
+        var mapActor = Game.Scene.GetActor<MapActor>()!;
+        var navMesh = mapActor.NavMesh;
+        _cameraSwitcher.TopDown.SetPanBounds(mapActor.Map.BoundsMin, mapActor.Map.BoundsMax);
         Console.WriteLine($"[MOBA.Client] navmesh polys = {navMesh.PolyCount}");
 
         AddSystem(new DebugOverlaySystem(_input.Context, Game.Scene, SwitchScene));
@@ -167,7 +170,7 @@ public sealed class ClientGame : GameHost
 
         _backend.Resize(_window.FramebufferSize.X, _window.FramebufferSize.Y);
 
-        Console.WriteLine("[MOBA.Client] Loaded. LMB = move player, F1 = camera toggle, F2 = navmesh, F3 = paths, F4 = scene switch, RMB+drag = look, WASD/QE = free-fly.");
+        Console.WriteLine("[MOBA.Client] Loaded. LMB = move, F1 = camera, F2 = navmesh, F3 = paths, F4 = scene switch, F5 = log player pos, RMB+drag = look, WASD/QE = free-fly, Arrows / edge / wheel = top-down pan & zoom.");
     }
 
     private void ApplyEnvironment(EnvironmentDefinition environment)

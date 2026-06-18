@@ -37,6 +37,7 @@ public sealed class ServerGame : GameHost
             new MapActorFactory(assets),
             new BuildingActorFactory(),
             new MonsterActorFactory(),
+            new TeamActorFactory(),
         ]);
         var sceneManager = new SceneManager(Game.Scene, definition => new GameSceneActor(definition, registry, assets));
         AddSystem(sceneManager);

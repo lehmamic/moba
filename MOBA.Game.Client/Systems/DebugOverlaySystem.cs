@@ -1,6 +1,8 @@
 using MOBA.Engine.Core.Abstractions;
 using MOBA.Engine.Core.Hosting;
+using MOBA.Game.Actors;
 using MOBA.Game.Client.Actors;
+using MOBA.Game.Client.Components;
 using Silk.NET.Input;
 
 namespace MOBA.Game.Client.Systems;
@@ -54,7 +56,24 @@ public sealed class DebugOverlaySystem : IEngineSystem
             case Key.F4:
                 _onSceneSwitch?.Invoke();
                 break;
+            case Key.F5:
+                LogLocalPlayerPosition();
+                break;
         }
+    }
+
+    private void LogLocalPlayerPosition()
+    {
+        foreach (var a in _scene.Actors)
+        {
+            if (a is PlayerActor player && player.GetComponent<LocalPlayerInputComponent>() is not null)
+            {
+                var p = player.Transform.Position;
+                Console.WriteLine($"[MOBA.Client] local player @ ({p.X:F2}, {p.Y:F2}, {p.Z:F2}) team={player.Team}");
+                return;
+            }
+        }
+        Console.WriteLine("[MOBA.Client] no local player in scene yet.");
     }
 
     private T? FindOverlay<T>() where T : Actor

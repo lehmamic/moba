@@ -1,4 +1,5 @@
 using MOBA.Game.Scenes;
+using Silk.NET.Maths;
 
 namespace MOBA.Game.Models;
 
@@ -7,6 +8,13 @@ namespace MOBA.Game.Models;
 /// ground mesh and the precomputed navmesh blob. Static map content
 /// (buildings, monsters, …) live as their own actors in the scene, not as
 /// lists on the map — this class is just the world's geographic header.
+///
+/// <para>
+/// <see cref="BoundsMin"/> / <see cref="BoundsMax"/> describe the X/Z extent
+/// of the playable field. The camera clamps its pan target to this rectangle
+/// so the lens never leaves the map. Falls back to a centred <see cref="Width"/>
+/// × <see cref="Length"/> box when the JSON does not specify them.
+/// </para>
 /// </summary>
 public sealed class Map
 {
@@ -14,12 +22,16 @@ public sealed class Map
         float width,
         float length,
         string terrainMesh = "dimension-rift",
-        string navMesh = "dimension-rift.navmesh")
+        string navMesh = "dimension-rift.navmesh",
+        Vector2D<float>? boundsMin = null,
+        Vector2D<float>? boundsMax = null)
     {
         Width = width;
         Length = length;
         TerrainMesh = terrainMesh;
         NavMesh = navMesh;
+        BoundsMin = boundsMin ?? new Vector2D<float>(-width / 2f, -length / 2f);
+        BoundsMax = boundsMax ?? new Vector2D<float>(width / 2f, length / 2f);
     }
 
     public float Width { get; }
@@ -36,13 +48,21 @@ public sealed class Map
     /// </summary>
     public string NavMesh { get; }
 
+    /// <summary>Min (X, Z) corner of the playable field rectangle.</summary>
+    public Vector2D<float> BoundsMin { get; }
+
+    /// <summary>Max (X, Z) corner of the playable field rectangle.</summary>
+    public Vector2D<float> BoundsMax { get; }
+
     /// <summary>Built from a deserialised <see cref="MapDefinition"/> (JSON).</summary>
     public static Map FromDefinition(MapDefinition definition) =>
         new(
             definition.Width,
             definition.Length,
             definition.TerrainMesh ?? "dimension-rift",
-            definition.NavMesh ?? "dimension-rift.navmesh");
+            definition.NavMesh ?? "dimension-rift.navmesh",
+            ParseXz(definition.BoundsMin),
+            ParseXz(definition.BoundsMax));
 
     /// <summary>
     /// Skeleton fallback: 150 × 150 world units (≈ LoL-scale playing field in our unit).
@@ -50,4 +70,7 @@ public sealed class Map
     /// (e.g. unit tests, scripted simulations).
     /// </summary>
     public static Map LeagueSized() => new(150f, 150f);
+
+    private static Vector2D<float>? ParseXz(float[]? raw) =>
+        raw is { Length: 2 } v ? new Vector2D<float>(v[0], v[1]) : null;
 }

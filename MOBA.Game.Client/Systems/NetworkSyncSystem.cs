@@ -120,6 +120,7 @@ public sealed class NetworkSyncSystem : IEngineSystem
             && player.GetComponent<LocalPlayerInputComponent>() is null)
         {
             _ = new LocalPlayerInputComponent(player, _cameras, _transport, _navMesh);
+            _cameras.TopDown.CenterOn(player.Transform.Position);
         }
     }
 
@@ -143,7 +144,9 @@ public sealed class NetworkSyncSystem : IEngineSystem
             // Idempotent — duplicate spawn from a catch-up replay.
             return;
         }
-        var player = new PlayerActor(new Vector3D<float>(message.X, message.Y, message.Z));
+        // Team is not replicated yet — server-only state today. Future
+        // ActorSpawnMessage extension will carry it for HUD colouring etc.
+        var player = new PlayerActor(new Vector3D<float>(message.X, message.Y, message.Z), team: "Unknown");
         // Player visual scale relative to the dimension-rift map. The knight model
         // is ~2 units tall at source — boost so it reads at MOBA-champion proportions
         // against the textured Sketchfab terrain. Tune until camera/character feel right.
@@ -154,6 +157,7 @@ public sealed class NetworkSyncSystem : IEngineSystem
         if (_localPlayerNetworkId == message.Id)
         {
             _ = new LocalPlayerInputComponent(player, _cameras, _transport, _navMesh);
+            _cameras.TopDown.CenterOn(player.Transform.Position);
         }
         _scene.AddActor(player);
         _actorsById[message.Id] = player;
