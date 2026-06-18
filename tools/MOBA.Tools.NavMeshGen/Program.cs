@@ -1,6 +1,6 @@
 using System.Numerics;
 using System.Text.Json;
-using MOBA.Game;
+using MOBA.Game.Scenes;
 
 namespace MOBA.Tools.NavMeshGen;
 
@@ -26,9 +26,21 @@ internal static class Program
         Console.WriteLine($"[NavMeshGen] assets  = {options.AssetsRoot}");
         Console.WriteLine($"[NavMeshGen] output  = {options.OutputPath}");
 
-        var map = JsonSerializer.Deserialize<MapDefinition>(
+        var scene = JsonSerializer.Deserialize<SceneDefinition>(
             File.ReadAllText(options.MapJson),
-            JsonOpts) ?? throw new InvalidDataException($"Could not parse map JSON: {options.MapJson}");
+            JsonOpts) ?? throw new InvalidDataException($"Could not parse scene JSON: {options.MapJson}");
+
+        var mapEntry = scene.Actors.FirstOrDefault(a => a.Type == "Map")
+            ?? throw new InvalidDataException($"Scene JSON has no Actor with Type=Map: {options.MapJson}");
+        var map = mapEntry.Properties.Deserialize<MapDefinition>(JsonOpts)
+            ?? throw new InvalidDataException("Map actor entry could not be parsed as MapDefinition.");
+
+        var buildings = scene.Actors
+            .Where(a => a.Type == "Building")
+            .Select(a => a.Properties.Deserialize<BuildingProperties>(JsonOpts)
+                ?? throw new InvalidDataException($"Building actor '{a.Id}' could not be parsed."))
+            .Select((b, idx) => new BuildingEntry(b.File, scene.Actors.Where(x => x.Type == "Building").ElementAt(idx).Transform!))
+            .ToList();
 
         var terrainPath = Path.Combine(options.AssetsRoot, "maps", $"{map.TerrainMesh}.glb");
         Console.WriteLine($"[NavMeshGen] terrain = {terrainPath}");
@@ -41,7 +53,7 @@ internal static class Program
 
         // Each Building (Tower / Nexus) becomes an obstacle: read the prefab GLB once
         // per type, compute its XZ footprint as an octagon, place at instance position.
-        var obstacles = BuildObstacles(map, options.AssetsRoot);
+        var obstacles = BuildObstacles(buildings, options.AssetsRoot);
         Console.WriteLine($"  obstacles   = {obstacles.Count}");
 
         // Build + serialise.
@@ -57,12 +69,12 @@ internal static class Program
         return 0;
     }
 
-    private static List<NavMeshBuild.Obstacle> BuildObstacles(MapDefinition map, string assetsRoot)
+    private static List<NavMeshBuild.Obstacle> BuildObstacles(IReadOnlyList<BuildingEntry> buildings, string assetsRoot)
     {
         // Cache prefab XZ footprints by File path so we only load each prefab GLB once.
         var footprintCache = new Dictionary<string, float>();
         var obstacles = new List<NavMeshBuild.Obstacle>();
-        foreach (var building in map.Buildings ?? [])
+        foreach (var building in buildings)
         {
             if (!footprintCache.TryGetValue(building.File, out var radius))
             {
@@ -94,6 +106,9 @@ internal static class Program
         }
         return obstacles;
     }
+
+    private sealed record BuildingProperties(string BuildingType, string File, string? Team = null);
+    private sealed record BuildingEntry(string File, TransformDefinition Transform);
 
     private static string ResolveAssetPath(string repoRelative, string assetsRoot)
     {

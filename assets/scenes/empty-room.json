@@ -1,0 +1,71 @@
+{
+  "Name": "empty-room",
+  "Type": "Game",
+  "Environment": {
+    "ClearColor": [
+      0.6,
+      0.1,
+      0.1
+    ],
+    "Light": {
+      "Direction": [
+        0.3,
+        1.0,
+        0.4
+      ],
+      "Color": [
+        1.0,
+        0.95,
+        0.9
+      ],
+      "Ambient": [
+        0.4,
+        0.2,
+        0.2
+      ],
+      "SpecularStrength": 0.5,
+      "Shininess": 32
+    }
+  },
+  "Cameras": {
+    "Default": "FreeFly"
+  },
+  "Actors": [
+    {
+      "Type": "Map",
+      "Id": "map",
+      "Properties": {
+        "Width": 150.0,
+        "Length": 150.0,
+        "TerrainMesh": "dimension-rift",
+        "NavMesh": "dimension-rift.navmesh"
+      }
+    },
+    {
+      "Type": "Building",
+      "Id": "lonely_tower",
+      "Transform": {
+        "Position": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "Rotation": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "Scale": [
+          1.0,
+          1.0,
+          1.0
+        ]
+      },
+      "Properties": {
+        "BuildingType": "Tower",
+        "File": "assets/buildings/blue-tower.glb",
+        "Team": "Blue"
+      }
+    }
+  ]
+}

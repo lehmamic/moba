@@ -2,6 +2,10 @@ using System.Diagnostics;
 using MOBA.Engine.Core;
 using MOBA.Engine.Networking.Riptide;
 using MOBA.Game;
+using MOBA.Game.Actors;
+using MOBA.Game.Factories;
+using MOBA.Game.Scenes;
+using MOBA.Game.Systems;
 using MOBA.Utilities;
 
 namespace MOBA.Server;
@@ -19,23 +23,26 @@ public sealed class ServerGame : GameHost
 
     public ServerGame()
     {
-        // Single AssetManager for every server-side asset type. AddMapCache lives in
-        // MOBA.Game as an extension method so both server and client deserialise the
-        // same JSON the same way.
         var assets = new AssetManager();
+        var scenesRoot = AbsolutePath.AppBaseDirectory / "assets" / "scenes";
         var mapsRoot = AbsolutePath.AppBaseDirectory / "assets" / "maps";
-        assets.AddMapCache(mapsRoot);
+        assets.AddSceneCache(scenesRoot);
         assets.AddNavMeshCache(mapsRoot);
         AddSystem(assets);
 
-        var map = Map.FromDefinition(assets.LoadMap("dimension-rift.json"));
-        // Generated out-of-game by tools/MOBA.Tools.NavMeshGen. Server is authoritative
-        // for movement validation, so the navmesh load is mandatory.
-        var navMesh = assets.LoadNavMesh(map.NavMesh);
-        Console.WriteLine($"[MOBA.Server] navmesh polys = {navMesh.PolyCount}");
+        // Sim-only factory list — server has no rendering concerns. Adding a new
+        // actor type means appending one new factory class and one entry here.
+        var registry = new ActorFactoryRegistry([
+            new MapActorFactory(assets),
+            new BuildingActorFactory(),
+            new MonsterActorFactory(),
+        ]);
+        var sceneManager = new SceneManager(Game.Scene, definition => new GameSceneActor(definition, registry, assets));
+        AddSystem(sceneManager);
 
-        var world = new MobaWorld(map, navMesh);
-        world.Populate(Game.Scene);
+        sceneManager.LoadScene(assets.LoadScene("dimension-rift.json"));
+        var navMesh = Game.Scene.GetActor<MapActor>()!.NavMesh;
+        Console.WriteLine($"[MOBA.Server] navmesh polys = {navMesh.PolyCount}");
 
         // Order matters: transport first so subsequent systems can subscribe
         // during their OnInitialize. PlayerConnectionSystem owns the

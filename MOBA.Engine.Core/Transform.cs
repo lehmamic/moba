@@ -21,17 +21,31 @@ namespace MOBA.Engine.Core;
 /// </summary>
 public sealed class Transform
 {
+    private readonly Actor _owner;
+
+    internal Transform(Actor owner) => _owner = owner;
+
     public Vector3D<float> Position { get; set; } = Vector3D<float>.Zero;
 
     public Quaternion<float> Rotation { get; set; } = Quaternion<float>.Identity;
 
     public Vector3D<float> Scale { get; set; } = Vector3D<float>.One;
 
-    /// <summary>Composed world matrix: <c>S * R * T</c> in row-vector convention.</summary>
-    public Matrix4X4<float> World =>
+    /// <summary>Local matrix relative to the parent (or world if there is no parent): <c>S * R * T</c> in row-vector convention.</summary>
+    public Matrix4X4<float> Local =>
         Matrix4X4.CreateScale(Scale)
         * Matrix4X4.CreateFromQuaternion(Rotation)
         * Matrix4X4.CreateTranslation(Position);
+
+    /// <summary>
+    /// World matrix — folds <see cref="Local"/> through the parent chain
+    /// (<c>Local * Parent.World</c>, recursively). Recomputed every read; at our
+    /// actor counts (~tens) and shallow hierarchies (~2) this is negligible —
+    /// move to a cached-with-dirty-flag scheme only if profiling shows it.
+    /// Falls back to <see cref="Local"/> when the actor has no parent.
+    /// </summary>
+    public Matrix4X4<float> World =>
+        _owner.Parent is { } parent ? Local * parent.Transform.World : Local;
 
     /// <summary>
     /// World-space forward vector — the actor's bind-pose +X axis rotated by

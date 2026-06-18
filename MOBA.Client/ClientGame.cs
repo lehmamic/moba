@@ -3,7 +3,17 @@ using MOBA.Engine.Graphics;
 using MOBA.Engine.Graphics.OpenGL;
 using MOBA.Engine.Networking.Riptide;
 using MOBA.Game;
+using MOBA.Game.Actors;
 using MOBA.Game.Client;
+using MOBA.Game.Client.Actors;
+using MOBA.Game.Client.Cameras;
+using MOBA.Game.Client.Factories;
+using MOBA.Game.Client.Input;
+using MOBA.Game.Client.Systems;
+using MOBA.Game.Components;
+using MOBA.Game.Factories;
+using MOBA.Game.Models;
+using MOBA.Game.Scenes;
 using MOBA.Utilities;
 using Silk.NET.Input;
 using Silk.NET.Maths;
@@ -65,75 +75,72 @@ public sealed class ClientGame : GameHost
         var shadersRoot = assetsRoot / "shaders";
         var texturesRoot = assetsRoot / "textures";
         var mapsRoot = assetsRoot / "maps";
+        var scenesRoot = assetsRoot / "scenes";
 
         _assets = new AssetManager();
         _assets.AddShaderCache(_backend, shadersRoot);
         _assets.AddTextureCache(_backend, texturesRoot);
         _assets.AddMeshCache(_backend);
         _assets.AddModelCache(_backend, assetsRoot);
-        _assets.AddMapCache(mapsRoot);
+        _assets.AddSceneCache(scenesRoot);
         _assets.AddNavMeshCache(mapsRoot);
 
-        var aspectRatio = (float)_window.FramebufferSize.X / _window.FramebufferSize.Y;
-        _cameraSwitcher = new CameraSwitcher(_input.Context, aspectRatio);
+        var sceneDef = _assets.LoadScene("dimension-rift.json");
 
-        var shader = _assets.LoadShader("phong_textured");
-        var markerMaterial = new Material(shader, _assets.LoadTexture("marker_magenta.png"));
+        var aspectRatio = (float)_window.FramebufferSize.X / _window.FramebufferSize.Y;
+        _cameraSwitcher = new CameraSwitcher(_input.Context, aspectRatio, sceneDef.Cameras);
+
+        var markerMaterial = new Material(_assets.LoadShader("phong_textured"), _assets.LoadTexture("marker_magenta.png"));
 
         // Player character: glTF model in bind pose (no skinning yet — that's a later
-        // iteration). Material's shader resolves through the shader cache (default
-        // "phong_textured" unless the glTF material's extras.shader overrides).
-        // Multi-part assets walk knight.Parts directly.
+        // iteration). Knight + marker are dynamic/network-spawned content, not
+        // scene-authored, so they stay client-resolved here rather than in the JSON.
         var knight = _assets.LoadModel("models/knight-garen");
 
-        // Sun-like directional light from upper-front-right. Direction points *toward*
-        // the light source — see DirectionalLight XML doc.
-        _light = new DirectionalLight(
-            Direction: Vector3D.Normalize(new Vector3D<float>(0.3f, 1.0f, 0.4f)),
-            Color: new Vector3D<float>(1.0f, 0.95f, 0.9f),
-            AmbientColor: new Vector3D<float>(0.2f, 0.22f, 0.28f),
-            SpecularStrength: 0.5f,
-            Shininess: 32f);
+        // Client-side factory list — each factory attaches the render component
+        // for its actor type. Dependencies are constructor-injected per factory;
+        // no separate Actor subclass per side, no central build-context bag.
+        var registry = new ActorFactoryRegistry([
+            new ClientMapActorFactory(_assets),
+            new ClientBuildingActorFactory(_assets),
+            new ClientMonsterActorFactory(_assets),
+        ]);
+        var sceneManager = new SceneManager(Game.Scene, BuildClientGameScene);
+        AddSystem(sceneManager);
 
-        var map = Map.FromDefinition(_assets.LoadMap("dimension-rift.json"));
-        var terrainModel = _assets.LoadModel($"maps/{map.TerrainMesh}");
-        // Generated out-of-game by tools/MOBA.Tools.NavMeshGen. Client uses it for
-        // pre-send target snap + F2 debug overlay; server validates the same data.
-        var navMesh = _assets.LoadNavMesh(map.NavMesh);
+        GameSceneActor BuildClientGameScene(SceneDefinition definition)
+        {
+            var sceneActor = new GameSceneActor(definition, registry, _assets!);
+            if (sceneActor.GetComponent<EnvironmentComponent>() is { Definition: { } env })
+            {
+                ApplyEnvironment(env);
+            }
+            if (sceneActor.GetChild<MapActor>() is { NavMesh: { } nav })
+            {
+                SpawnDebugOverlays(sceneActor, nav);
+            }
+            return sceneActor;
+        }
+
+        // F4 smoke-test: cycle through the debug scenes via the SceneManager.
+        // PlayerActor stays on the scene top-level (no parent) so it survives;
+        // the SceneActor's subtree (Buildings, Monsters, GroundPlane, overlays)
+        // is cascaded out and replaced.
+        var debugScenes = new[] { "dimension-rift.json", "empty-room.json" };
+        var debugSceneIdx = 0;
+        void SwitchScene()
+        {
+            debugSceneIdx = (debugSceneIdx + 1) % debugScenes.Length;
+            var next = _assets!.LoadScene(debugScenes[debugSceneIdx]);
+            sceneManager.LoadScene(next);
+            Console.WriteLine($"[MOBA.Client] switched scene: {next.Name}, actors={Game.Scene.Actors.Count}");
+        }
+
+        sceneManager.LoadScene(sceneDef);
+        var navMesh = Game.Scene.GetActor<MapActor>()!.NavMesh;
         Console.WriteLine($"[MOBA.Client] navmesh polys = {navMesh.PolyCount}");
 
-        var world = new MobaWorld(map, navMesh);
-        world.Populate(Game.Scene);
-
-        // Attach renderers to the pre-spawned static actors: the ground plus
-        // every building / monster the map definition placed. Player actors are
-        // spawned dynamically by NetworkSyncSystem when the server sends an
-        // ActorSpawn(Player) in reply to our JoinMessage.
-        foreach (var actor in Game.Scene.Actors)
-        {
-            switch (actor)
-            {
-                case GroundPlaneActor:
-                    // GLB is pre-scaled in Blender to 150-unit playable footprint and
-                    // the loader bakes per-node world transforms into vertex positions,
-                    // so the actor renders the map at its authored game-coord size.
-                    actor.Transform.Scale = Vector3D<float>.One;
-                    _ = new MeshRendererComponent(actor, terrainModel);
-                    break;
-                case BuildingActor building:
-                    _ = new MeshRendererComponent(building, _assets.LoadModel(building.Definition.MeshAsset));
-                    break;
-                case MonsterActor monster:
-                    // Monsters render-off for now: they're loaded so they exist in the
-                    // scene (and stay out of the navmesh), but the NavMesh iteration
-                    // wants a clean look while paths + obstacles are validated.
-                    _ = new MeshRendererComponent(monster, _assets.LoadModel(monster.Definition.MeshAsset))
-                    {
-                        IsVisible = false,
-                    };
-                    break;
-            }
-        }
+        AddSystem(new DebugOverlaySystem(_input.Context, Game.Scene, SwitchScene));
 
         var transport = new RiptideClientTransport();
         var syncSystem = new NetworkSyncSystem(
@@ -145,21 +152,6 @@ public sealed class ClientGame : GameHost
             _cameraSwitcher,
             navMesh);
 
-        // F2 debug overlay — modelled as a regular actor so the existing two-pass
-        // renderer draws it without any special hook. DebugOverlaySystem only owns
-        // the keybinding and flips the renderer's IsVisible flag.
-        var wireframeMaterial = new Material(_assets.LoadShader("wireframe"));
-        var navMeshOverlayActor = new NavMeshOverlayActor(_backend, navMesh, wireframeMaterial);
-        Game.Scene.AddActor(navMeshOverlayActor);
-
-        // F3 debug overlay — server-replicated paths for every player. Cyan shader
-        // distinguishes them from the magenta navmesh wireframe when both are on.
-        var pathMaterial = new Material(_assets.LoadShader("path"));
-        var pathOverlayActor = new PathOverlayActor(_backend, Game.Scene, pathMaterial);
-        Game.Scene.AddActor(pathOverlayActor);
-
-        var debugOverlay = new DebugOverlaySystem(_input.Context, navMeshOverlayActor, pathOverlayActor);
-
         // Order matters: transport before sync so MessageReceived events fire
         // after polling. NetworkSyncSystem.OnInitialize sends the Join message
         // — by then RiptideClientTransport's blocking OnInitialize has already
@@ -169,12 +161,38 @@ public sealed class ClientGame : GameHost
         AddSystem(transport);
         AddSystem(syncSystem);
         AddSystem(_cameraSwitcher);
-        AddSystem(debugOverlay);
         Initialize();
 
         _backend.Resize(_window.FramebufferSize.X, _window.FramebufferSize.Y);
 
-        Console.WriteLine("[MOBA.Client] Loaded. LMB = move player, F1 = camera toggle, F2 = navmesh, F3 = paths, RMB+drag = look, WASD/QE = free-fly.");
+        Console.WriteLine("[MOBA.Client] Loaded. LMB = move player, F1 = camera toggle, F2 = navmesh, F3 = paths, F4 = scene switch, RMB+drag = look, WASD/QE = free-fly.");
+    }
+
+    private void ApplyEnvironment(EnvironmentDefinition environment)
+    {
+        if (environment.ClearColor is { Length: 3 } c)
+        {
+            _renderer!.ClearColor = (c[0], c[1], c[2]);
+        }
+        if (environment.Light is { } l)
+        {
+            _light = new DirectionalLight(
+                Direction: Vector3D.Normalize(new Vector3D<float>(l.Direction[0], l.Direction[1], l.Direction[2])),
+                Color: new Vector3D<float>(l.Color[0], l.Color[1], l.Color[2]),
+                AmbientColor: new Vector3D<float>(l.Ambient[0], l.Ambient[1], l.Ambient[2]),
+                SpecularStrength: l.SpecularStrength,
+                Shininess: l.Shininess);
+        }
+    }
+
+    private void SpawnDebugOverlays(GameSceneActor sceneActor, NavMesh navMesh)
+    {
+        var assets = _assets!;
+        var wireframeMaterial = new Material(assets.LoadShader("wireframe"));
+        sceneActor.AddChild(new NavMeshOverlayActor(_backend!, navMesh, wireframeMaterial));
+
+        var pathMaterial = new Material(assets.LoadShader("path"));
+        sceneActor.AddChild(new PathOverlayActor(_backend!, Game.Scene, pathMaterial));
     }
 
     private void OnFramebufferResize(Vector2D<int> size)

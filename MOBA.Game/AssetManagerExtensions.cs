@@ -1,6 +1,9 @@
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using MOBA.Engine.Core;
 using MOBA.Utilities;
+using MOBA.Game.Scenes;
+using MOBA.Game.Models;
 
 namespace MOBA.Game;
 
@@ -13,16 +16,28 @@ namespace MOBA.Game;
 /// </summary>
 public static class AssetManagerExtensions
 {
-    public static AssetCache<string, MapDefinition> AddMapCache(
-        this AssetManager assets,
-        AbsolutePath mapsRoot) =>
-        assets.AddCache<string, MapDefinition>(filename =>
-            JsonSerializer.Deserialize<MapDefinition>(File.ReadAllText(mapsRoot / filename))
-            ?? throw new InvalidOperationException(
-                $"Failed to deserialise map definition '{filename}' from '{mapsRoot}'."));
+    private static readonly JsonSerializerOptions SceneJsonOptions = new()
+    {
+        Converters = { new JsonStringEnumConverter() },
+    };
 
-    public static MapDefinition LoadMap(this AssetManager assets, string filename) =>
-        assets.Cache<string, MapDefinition>().GetOrLoad(filename);
+    /// <summary>
+    /// Registers a <see cref="SceneDefinition"/> cache keyed by filename
+    /// (e.g. <c>dimension-rift.json</c>) under <paramref name="scenesRoot"/>.
+    /// Same file format the server and the client both load; the cache makes
+    /// double-load (Server + Client in the same process, tests, scene-switch)
+    /// cheap.
+    /// </summary>
+    public static AssetCache<string, SceneDefinition> AddSceneCache(
+        this AssetManager assets,
+        AbsolutePath scenesRoot) =>
+        assets.AddCache<string, SceneDefinition>(filename =>
+            JsonSerializer.Deserialize<SceneDefinition>(File.ReadAllText(scenesRoot / filename), SceneJsonOptions)
+            ?? throw new InvalidOperationException(
+                $"Failed to deserialise scene definition '{filename}' from '{scenesRoot}'."));
+
+    public static SceneDefinition LoadScene(this AssetManager assets, string filename) =>
+        assets.Cache<string, SceneDefinition>().GetOrLoad(filename);
 
     /// <summary>
     /// Registers a navmesh cache keyed by filename (e.g. <c>dimension-rift.navmesh</c>)

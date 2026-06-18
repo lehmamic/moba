@@ -16,6 +16,30 @@ public class Scene
 
     public IReadOnlyList<Actor> Actors => _actors;
 
+    /// <summary>
+    /// Returns the first actor of type <typeparamref name="T"/> in the scene,
+    /// or null if none exists. Convenience for one-of-a-kind actors (e.g. the
+    /// <c>MapActor</c>, the local <c>PlayerActor</c>) without forcing every
+    /// caller to spell out the LINQ <c>.OfType&lt;T&gt;().FirstOrDefault()</c>.
+    /// </summary>
+    public T? GetActor<T>() where T : Actor
+    {
+        foreach (var a in _actors)
+        {
+            if (a is T match)
+            {
+                return match;
+            }
+        }
+        return null;
+    }
+
+    /// <summary>
+    /// Adds <paramref name="actor"/> and every actor in its subtree (via
+    /// <see cref="Actor.Children"/>) to the flat actor list — Renderer
+    /// iteration stays flat regardless of how deep the hierarchy is.
+    /// <see cref="Actor.OnBegin"/> is called per actor in subtree order.
+    /// </summary>
     public void AddActor(Actor actor)
     {
         if (_updating)
@@ -27,10 +51,26 @@ public class Scene
             _actors.Add(actor);
         }
         actor.OnBegin();
+        foreach (var child in actor.Children)
+        {
+            AddActor(child);
+        }
     }
 
+    /// <summary>
+    /// Removes <paramref name="actor"/> and every actor in its subtree. Calls
+    /// <see cref="Actor.OnEnd"/> once at the root, which cascades through
+    /// children (see <see cref="Actor.OnEnd"/>).
+    /// </summary>
     public bool RemoveActor(Actor actor)
     {
+        // Remove children from the flat list first, then the root — keeps the
+        // invariant that any actor visible to the renderer always has its
+        // parent visible too (no orphaned subtree mid-removal).
+        foreach (var child in actor.Children.ToArray())
+        {
+            RemoveActor(child);
+        }
         if (_actors.Remove(actor))
         {
             actor.OnEnd();
@@ -84,7 +124,15 @@ public class Scene
         }
     }
 
-    public void Shutdown()
+    public void Shutdown() => Clear();
+
+    /// <summary>
+    /// Ends every actor and empties both lists. Used both by host shutdown
+    /// and by <c>GameHost.LoadScene</c> when swapping to a new scene — this
+    /// is a hard reset, networked actors that are not reborn by the next
+    /// scene's load step will be gone after this returns.
+    /// </summary>
+    public void Clear()
     {
         foreach (var a in _actors)
         {
