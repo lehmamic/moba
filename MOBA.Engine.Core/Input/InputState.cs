@@ -1,14 +1,14 @@
 using Silk.NET.Maths;
 
-namespace MOBA.Engine.Core;
+namespace MOBA.Engine.Core.Input;
 
 /// <summary>
 /// Per-frame input snapshot captured by the client and threaded through
-/// <see cref="GameHost.ProcessInput"/> → <see cref="Scene.ProcessInput"/> →
-/// <see cref="Actor.ProcessInput"/> → <see cref="Component.OnProcessInput"/>.
+/// <c>GameHost.ProcessInput</c> → <c>Scene.ProcessInput</c> →
+/// <c>Actor.ProcessInput</c> → <c>Component.OnProcessInput</c>.
 /// Components own the decision of what to do with the input (Madhav,
 /// <i>Game Programming in C++</i>, Ch. 2: <c>Game::ProcessInput</c>). The
-/// server's <see cref="GameHost"/> never calls <c>ProcessInput</c>.
+/// server's <c>GameHost</c> never calls <c>ProcessInput</c>.
 /// </summary>
 /// <param name="MousePosition">Mouse position in screen-pixel coordinates.</param>
 /// <param name="FramebufferSize">Framebuffer size in pixels; needed for ray-cast unprojection.</param>

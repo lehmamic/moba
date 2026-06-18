@@ -1,8 +1,8 @@
-namespace MOBA.Engine.Core;
+namespace MOBA.Engine.Core.Hosting;
 
 /// <summary>
 /// Opt-in hook for a system that needs to run <b>after</b> the per-tick simulation
-/// (<see cref="Scene.Update"/>) has advanced actors and their components. Typical
+/// (<c>Scene.Update</c>) has advanced actors and their components. Typical
 /// users are server-side state broadcasters: the sim has produced the new
 /// positions, OnPostUpdate observes them and pushes the deltas over the network.
 /// The <see cref="GameHost"/> ticks <c>OnUpdate</c> on every system first, then

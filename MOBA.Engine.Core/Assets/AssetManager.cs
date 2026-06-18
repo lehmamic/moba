@@ -1,4 +1,5 @@
-namespace MOBA.Engine.Core;
+using MOBA.Engine.Core.Hosting;
+namespace MOBA.Engine.Core.Assets;
 
 /// <summary>
 /// One-stop hub for every <see cref="AssetCache{TKey,TAsset}"/> the host needs.

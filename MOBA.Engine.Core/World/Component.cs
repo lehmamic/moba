@@ -1,4 +1,6 @@
-namespace MOBA.Engine.Core;
+using MOBA.Engine.Core.Hosting;
+using MOBA.Engine.Core.Input;
+namespace MOBA.Engine.Core.World;
 
 public abstract class Component
 {

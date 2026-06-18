@@ -1,5 +1,5 @@
 using System.Diagnostics;
-using MOBA.Engine.Core;
+using MOBA.Engine.Core.Hosting;
 using Riptide;
 
 namespace MOBA.Engine.Networking.Riptide;

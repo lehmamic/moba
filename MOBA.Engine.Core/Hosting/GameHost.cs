@@ -1,8 +1,10 @@
-namespace MOBA.Engine.Core;
+using MOBA.Engine.Core.Input;
+
+namespace MOBA.Engine.Core.Hosting;
 
 /// <summary>
 /// Shared base for the client- and server-side entry hosts. Owns the sim
-/// <see cref="Core.Game"/> and an <see cref="IEngineSystem"/> list, and propagates
+/// <c>Game</c> and an <see cref="IEngineSystem"/> list, and propagates
 /// the per-tick lifecycle. Subclasses (<c>ClientGame</c>, <c>ServerGame</c>) provide
 /// their own <c>Run()</c> because the cadence differs (window vs fixed-step loop).
 ///

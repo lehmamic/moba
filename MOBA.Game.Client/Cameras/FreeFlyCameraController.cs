@@ -1,8 +1,7 @@
 using MOBA.Engine.Graphics;
+using MOBA.Game.Scenes;
 using Silk.NET.Input;
 using Silk.NET.Maths;
-
-using MOBA.Game.Scenes;
 
 namespace MOBA.Game.Client.Cameras;
 

@@ -1,4 +1,5 @@
-namespace MOBA.Engine.Core;
+using MOBA.Engine.Core.Hosting;
+namespace MOBA.Engine.Core.Assets;
 
 /// <summary>
 /// Generic lazy-load cache that participates in the <see cref="GameHost"/> lifecycle.

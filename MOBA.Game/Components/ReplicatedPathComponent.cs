@@ -1,4 +1,4 @@
-using MOBA.Engine.Core;
+using MOBA.Engine.Core.World;
 using Silk.NET.Maths;
 
 namespace MOBA.Game.Components;

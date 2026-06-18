@@ -1,4 +1,4 @@
-namespace MOBA.Engine.Core;
+namespace MOBA.Engine.Core.Hosting;
 
 /// <summary>
 /// Lifecycle contract for things that the <see cref="GameHost"/> drives every tick:

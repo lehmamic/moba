@@ -2,7 +2,7 @@ namespace MOBA.Game.Scenes;
 
 /// <summary>
 /// JSON-serialisable description of a complete scene — server and client load
-/// the same file via <see cref="MOBA.Engine.Core.AssetCache{TKey,TAsset}"/>.
+/// the same file via <c>AssetCache&lt;TKey,TAsset&gt;</c>.
 /// A scene is the unit the <c>SceneManager</c> consumes; everything that lives
 /// in the scene at start-of-day is described here. Network-spawned actors
 /// (players, markers) are NOT in the scene file — they arrive at runtime via
