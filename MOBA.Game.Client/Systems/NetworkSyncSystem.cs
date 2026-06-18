@@ -1,6 +1,6 @@
 using MOBA.Engine.Core.Assets;
 using MOBA.Engine.Core.Hosting;
-using MOBA.Engine.Core.World;
+using MOBA.Engine.Core.Abstractions;
 using MOBA.Engine.Graphics;
 using MOBA.Engine.Networking;
 using MOBA.Game.Actors;

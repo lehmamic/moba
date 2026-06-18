@@ -1,5 +1,5 @@
 using MOBA.Engine.Core.Hosting;
-using MOBA.Engine.Core.World;
+using MOBA.Engine.Core.Abstractions;
 
 namespace MOBA.Engine.Graphics;
 

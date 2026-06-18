@@ -1,4 +1,4 @@
-using MOBA.Engine.Core.World;
+using MOBA.Engine.Core.Abstractions;
 
 namespace MOBA.Game.Components;
 

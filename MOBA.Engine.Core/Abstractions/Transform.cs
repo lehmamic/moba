@@ -1,6 +1,6 @@
 using Silk.NET.Maths;
 
-namespace MOBA.Engine.Core.World;
+namespace MOBA.Engine.Core.Abstractions;
 
 /// <summary>
 /// Position, rotation, and scale for an <see cref="Actor"/>, plus the composed

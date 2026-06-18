@@ -1,6 +1,6 @@
 using System.Text.Json;
 using MOBA.Engine.Core.Assets;
-using MOBA.Engine.Core.World;
+using MOBA.Engine.Core.Abstractions;
 using MOBA.Game.Actors;
 using MOBA.Game.Models;
 using MOBA.Game.Scenes;

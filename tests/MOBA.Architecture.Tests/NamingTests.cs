@@ -1,5 +1,5 @@
 using ArchUnitNET.xUnitV3;
-using MOBA.Engine.Core.World;
+using MOBA.Engine.Core.Abstractions;
 using Xunit;
 using static ArchUnitNET.Fluent.ArchRuleDefinition;
 using static MOBA.Architecture.Tests.MobaArchitecture;
