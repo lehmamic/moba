@@ -1,5 +1,5 @@
-using MOBA.Engine.Core.Hosting;
 using MOBA.Engine.Core.Abstractions;
+using MOBA.Engine.Core.Hosting;
 using Silk.NET.Maths;
 
 namespace MOBA.Game.Components;

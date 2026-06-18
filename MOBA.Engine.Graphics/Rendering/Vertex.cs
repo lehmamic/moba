@@ -1,7 +1,7 @@
 using System.Runtime.InteropServices;
 using Silk.NET.Maths;
 
-namespace MOBA.Engine.Graphics;
+namespace MOBA.Engine.Graphics.Rendering;
 
 [StructLayout(LayoutKind.Sequential)]
 public readonly record struct Vertex(

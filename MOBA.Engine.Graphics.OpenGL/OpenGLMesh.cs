@@ -1,3 +1,5 @@
+using MOBA.Engine.Graphics.Abstractions;
+using MOBA.Engine.Graphics.Rendering;
 using Silk.NET.OpenGL;
 
 namespace MOBA.Engine.Graphics.OpenGL;

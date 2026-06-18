@@ -1,7 +1,8 @@
-using MOBA.Engine.Core.Hosting;
 using MOBA.Engine.Core.Abstractions;
+using MOBA.Engine.Core.Hosting;
+using MOBA.Engine.Graphics.Abstractions;
 
-namespace MOBA.Engine.Graphics;
+namespace MOBA.Engine.Graphics.Rendering;
 
 /// <summary>
 /// Per-frame scene renderer. Walks the actors of a <see cref="Scene"/> in two

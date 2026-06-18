@@ -1,6 +1,6 @@
 using Silk.NET.Maths;
 
-namespace MOBA.Engine.Graphics;
+namespace MOBA.Engine.Graphics.Rendering;
 
 /// <summary>
 /// One scene-wide directional light. <see cref="Direction"/> is the unit vector

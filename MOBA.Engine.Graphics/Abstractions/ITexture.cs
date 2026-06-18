@@ -1,4 +1,4 @@
-namespace MOBA.Engine.Graphics;
+namespace MOBA.Engine.Graphics.Abstractions;
 
 public interface ITexture : IDisposable
 {

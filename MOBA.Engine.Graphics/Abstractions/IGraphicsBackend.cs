@@ -1,6 +1,8 @@
+using MOBA.Engine.Graphics.Animations;
+using MOBA.Engine.Graphics.Rendering;
 using Silk.NET.Maths;
 
-namespace MOBA.Engine.Graphics;
+namespace MOBA.Engine.Graphics.Abstractions;
 
 public interface IGraphicsBackend : IDisposable
 {

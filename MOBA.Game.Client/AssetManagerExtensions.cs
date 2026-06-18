@@ -1,6 +1,6 @@
 using System.Globalization;
 using MOBA.Engine.Core.Assets;
-using MOBA.Engine.Graphics;
+using MOBA.Engine.Graphics.Abstractions;
 using MOBA.Game.Client.Meshes;
 
 namespace MOBA.Game.Client;

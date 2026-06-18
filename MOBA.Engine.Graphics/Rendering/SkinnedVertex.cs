@@ -1,7 +1,7 @@
 using System.Runtime.InteropServices;
 using Silk.NET.Maths;
 
-namespace MOBA.Engine.Graphics;
+namespace MOBA.Engine.Graphics.Rendering;
 
 /// <summary>
 /// Vertex layout for skinned meshes: position + normal + 4 bone influences

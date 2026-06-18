@@ -1,5 +1,6 @@
 using MOBA.Engine.Core.Abstractions;
-using MOBA.Engine.Graphics;
+using MOBA.Engine.Graphics.Abstractions;
+using MOBA.Engine.Graphics.Rendering;
 using MOBA.Game.Client.Components;
 using MOBA.Game.Models;
 using Silk.NET.Maths;

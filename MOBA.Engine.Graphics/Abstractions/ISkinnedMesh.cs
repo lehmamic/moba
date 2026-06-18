@@ -1,4 +1,4 @@
-namespace MOBA.Engine.Graphics;
+namespace MOBA.Engine.Graphics.Abstractions;
 
 /// <summary>
 /// A GPU mesh whose vertices carry skinning information (bone indices + weights).

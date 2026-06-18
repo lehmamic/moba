@@ -1,6 +1,6 @@
 using Silk.NET.Maths;
 
-namespace MOBA.Engine.Graphics;
+namespace MOBA.Engine.Graphics.Animations;
 
 /// <summary>
 /// Local TR of a skeleton bone (rotation + translation). Mirrors Madhav

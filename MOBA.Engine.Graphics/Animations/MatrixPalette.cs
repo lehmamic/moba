@@ -1,6 +1,6 @@
 using Silk.NET.Maths;
 
-namespace MOBA.Engine.Graphics;
+namespace MOBA.Engine.Graphics.Animations;
 
 /// <summary>
 /// Fixed-size palette of bone matrices uploaded to the skinning shader as

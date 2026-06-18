@@ -1,6 +1,6 @@
 using Silk.NET.Maths;
 
-namespace MOBA.Engine.Graphics;
+namespace MOBA.Engine.Graphics.Animations;
 
 /// <summary>
 /// A hierarchical bone skeleton, as loaded from a glTF skin. Mirrors Madhav

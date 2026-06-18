@@ -1,6 +1,6 @@
 using Silk.NET.Maths;
 
-namespace MOBA.Engine.Graphics;
+namespace MOBA.Engine.Graphics.Rendering;
 
 /// <summary>
 /// Right-handed, Y-up. View and Projection use Silk.NET.Maths defaults (RH, OpenGL Z-range).

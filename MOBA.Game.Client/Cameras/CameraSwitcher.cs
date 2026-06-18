@@ -1,5 +1,5 @@
 using MOBA.Engine.Core.Hosting;
-using MOBA.Engine.Graphics;
+using MOBA.Engine.Graphics.Rendering;
 using MOBA.Game.Scenes;
 using Silk.NET.Input;
 

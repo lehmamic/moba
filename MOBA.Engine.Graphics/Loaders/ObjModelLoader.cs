@@ -1,9 +1,11 @@
 using System.Globalization;
 using MOBA.Engine.Core.Assets;
+using MOBA.Engine.Graphics.Abstractions;
+using MOBA.Engine.Graphics.Rendering;
 using MOBA.Utilities;
 using Silk.NET.Maths;
 
-namespace MOBA.Engine.Graphics;
+namespace MOBA.Engine.Graphics.Loaders;
 
 /// <summary>
 /// Loads Wavefront OBJ files into a <see cref="Model"/>. Parallel to

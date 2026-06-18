@@ -2,6 +2,7 @@ using MOBA.Engine.Core.Assets;
 using MOBA.Engine.Core.Hosting;
 using MOBA.Engine.Graphics;
 using MOBA.Engine.Graphics.OpenGL;
+using MOBA.Engine.Graphics.Rendering;
 using MOBA.Engine.Networking.Riptide;
 using MOBA.Game;
 using MOBA.Game.Actors;

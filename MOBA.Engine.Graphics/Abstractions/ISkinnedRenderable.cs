@@ -1,4 +1,5 @@
-namespace MOBA.Engine.Graphics;
+using MOBA.Engine.Graphics.Animations;
+namespace MOBA.Engine.Graphics.Abstractions;
 
 /// <summary>
 /// A renderable backed by an <see cref="ISkinnedMesh"/> plus a per-frame

@@ -1,4 +1,5 @@
-namespace MOBA.Engine.Graphics;
+using MOBA.Engine.Graphics.Rendering;
+namespace MOBA.Engine.Graphics.Abstractions;
 
 /// <summary>
 /// Implemented by any component the <see cref="Renderer"/> can draw. A renderable

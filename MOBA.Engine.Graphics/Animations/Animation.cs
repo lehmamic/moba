@@ -1,6 +1,6 @@
 using Silk.NET.Maths;
 
-namespace MOBA.Engine.Graphics;
+namespace MOBA.Engine.Graphics.Animations;
 
 /// <summary>
 /// A keyframe animation clip resampled to a fixed framerate, as in Madhav
@@ -12,7 +12,7 @@ namespace MOBA.Engine.Graphics;
 /// <para>
 /// glTF stores animations per-channel with channel-specific keyframe times,
 /// which is more flexible than Madhav's uniform-frame format. We resample on
-/// load (see <see cref="GltfModelLoader"/>) at a fixed frame interval so the
+/// load (see <c>GltfModelLoader</c>) at a fixed frame interval so the
 /// runtime evaluation matches the book exactly.
 /// </para>
 /// </summary>

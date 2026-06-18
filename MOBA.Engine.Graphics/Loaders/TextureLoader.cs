@@ -1,7 +1,8 @@
+using MOBA.Engine.Graphics.Abstractions;
 using MOBA.Utilities;
 using StbImageSharp;
 
-namespace MOBA.Engine.Graphics;
+namespace MOBA.Engine.Graphics.Loaders;
 
 /// <summary>
 /// File-based texture loading via StbImageSharp. Decodes any format stb_image understands

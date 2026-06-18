@@ -1,6 +1,8 @@
+using MOBA.Engine.Graphics.Abstractions;
+using MOBA.Engine.Graphics.Animations;
 using Silk.NET.Maths;
 
-namespace MOBA.Engine.Graphics;
+namespace MOBA.Engine.Graphics.Rendering;
 
 /// <summary>
 /// A renderable asset assembled from one or more <see cref="ModelPart"/>s

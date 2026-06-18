@@ -1,6 +1,8 @@
-using MOBA.Engine.Core.Hosting;
 using MOBA.Engine.Core.Abstractions;
-using MOBA.Engine.Graphics;
+using MOBA.Engine.Core.Hosting;
+using MOBA.Engine.Graphics.Abstractions;
+using MOBA.Engine.Graphics.Animations;
+using MOBA.Engine.Graphics.Rendering;
 using Silk.NET.Maths;
 
 namespace MOBA.Game.Client.Components;

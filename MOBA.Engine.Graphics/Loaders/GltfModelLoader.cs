@@ -1,10 +1,20 @@
 using System.Text.Json.Nodes;
 using MOBA.Engine.Core.Assets;
+using MOBA.Engine.Graphics.Abstractions;
+using MOBA.Engine.Graphics.Animations;
+using MOBA.Engine.Graphics.Rendering;
 using MOBA.Utilities;
 using SharpGLTF.Schema2;
-using Silk.NET.Maths;
 
-namespace MOBA.Engine.Graphics;
+using Silk.NET.Maths;
+using GltfAnimation = SharpGLTF.Schema2.Animation;
+using GltfMaterial = SharpGLTF.Schema2.Material;
+using GltfMeshPrimitive = SharpGLTF.Schema2.MeshPrimitive;
+using GltfModelRoot = SharpGLTF.Schema2.ModelRoot;
+using GltfNode = SharpGLTF.Schema2.Node;
+using GltfSkin = SharpGLTF.Schema2.Skin;
+
+namespace MOBA.Engine.Graphics.Loaders;
 
 /// <summary>
 /// Loads glTF 2.0 binary models (<c>.glb</c>) via SharpGLTF and assembles them into a
@@ -26,10 +36,10 @@ internal static class GltfModelLoader
         IGraphicsBackend backend,
         AssetManager assets)
     {
-        var modelRoot = ModelRoot.Load(filePath);
+        var modelRoot = GltfModelRoot.Load(filePath);
         var parts = new List<ModelPart>();
         Skeleton? skeleton = null;
-        Skin? gltfSkin = null;
+        GltfSkin? gltfSkin = null;
 
         // Iterate scene-graph nodes (not just unique meshes). A node carries the
         // world matrix that positions its mesh inside the model — for multi-part
@@ -84,7 +94,7 @@ internal static class GltfModelLoader
             throw new InvalidDataException($"glTF file '{filePath}' contains no mesh primitives.");
         }
 
-        IReadOnlyDictionary<string, Animation>? animations = null;
+        IReadOnlyDictionary<string, Animations.Animation>? animations = null;
         if (gltfSkin != null)
         {
             skeleton = BuildSkeleton(gltfSkin);
@@ -96,7 +106,7 @@ internal static class GltfModelLoader
 
     // ─── Vertex / index extraction ────────────────────────────────────────────────
 
-    private static Vertex[] ExtractVertices(MeshPrimitive primitive)
+    private static Vertex[] ExtractVertices(GltfMeshPrimitive primitive)
     {
         var positionsAcc = primitive.GetVertexAccessor("POSITION")
             ?? throw new InvalidDataException("glTF primitive lacks POSITION accessor.");
@@ -118,7 +128,7 @@ internal static class GltfModelLoader
         return vertices;
     }
 
-    private static SkinnedVertex[] ExtractSkinnedVertices(MeshPrimitive primitive)
+    private static SkinnedVertex[] ExtractSkinnedVertices(GltfMeshPrimitive primitive)
     {
         var positionsAcc = primitive.GetVertexAccessor("POSITION")
             ?? throw new InvalidDataException("glTF primitive lacks POSITION accessor.");
@@ -149,7 +159,7 @@ internal static class GltfModelLoader
         return verts;
     }
 
-    private static uint[] ExtractIndices(MeshPrimitive primitive)
+    private static uint[] ExtractIndices(GltfMeshPrimitive primitive)
     {
         var src = primitive.GetIndices();
         var dst = new uint[src.Count];
@@ -162,8 +172,8 @@ internal static class GltfModelLoader
 
     // ─── Material ─────────────────────────────────────────────────────────────────
 
-    private static Material BuildMaterial(
-        SharpGLTF.Schema2.Material? gltfMaterial,
+    private static Rendering.Material BuildMaterial(
+        GltfMaterial? gltfMaterial,
         IGraphicsBackend backend,
         AssetManager assets,
         bool isSkinned)
@@ -171,10 +181,10 @@ internal static class GltfModelLoader
         var shaderKey = ResolveShaderKey(gltfMaterial, isSkinned);
         var shader = assets.LoadShader(shaderKey);
         var texture = ExtractBaseColorTexture(gltfMaterial, backend);
-        return new Material(shader, texture);
+        return new Rendering.Material(shader, texture);
     }
 
-    private static string ResolveShaderKey(SharpGLTF.Schema2.Material? gltfMaterial, bool isSkinned)
+    private static string ResolveShaderKey(GltfMaterial? gltfMaterial, bool isSkinned)
     {
         if (gltfMaterial?.Extras is JsonObject obj
             && obj.TryGetPropertyValue("shader", out var node)
@@ -187,7 +197,7 @@ internal static class GltfModelLoader
     }
 
     private static ITexture? ExtractBaseColorTexture(
-        SharpGLTF.Schema2.Material? gltfMaterial,
+        GltfMaterial? gltfMaterial,
         IGraphicsBackend backend)
     {
         var channel = gltfMaterial?.FindChannel("BaseColor");
@@ -209,12 +219,12 @@ internal static class GltfModelLoader
 
     // ─── Skeleton + animations ────────────────────────────────────────────────────
 
-    private static Skeleton BuildSkeleton(Skin gltfSkin)
+    private static Skeleton BuildSkeleton(GltfSkin gltfSkin)
     {
         var jointsCount = gltfSkin.JointsCount;
 
         // Map each joint Node back to its index in this skin's joint list.
-        var nodeToIdx = new Dictionary<Node, int>();
+        var nodeToIdx = new Dictionary<GltfNode, int>();
         for (var i = 0; i < jointsCount; i++)
         {
             nodeToIdx[gltfSkin.GetJoint(i).Joint] = i;
@@ -255,12 +265,12 @@ internal static class GltfModelLoader
         return new Skeleton(bones, globalInvBindPoses);
     }
 
-    private static IReadOnlyDictionary<string, Animation> BuildAnimations(
-        IReadOnlyList<SharpGLTF.Schema2.Animation> gltfAnimations,
-        Skin gltfSkin,
+    private static IReadOnlyDictionary<string, Animations.Animation> BuildAnimations(
+        IReadOnlyList<GltfAnimation> gltfAnimations,
+        GltfSkin gltfSkin,
         Skeleton skeleton)
     {
-        var result = new Dictionary<string, Animation>(gltfAnimations.Count);
+        var result = new Dictionary<string, Animations.Animation>(gltfAnimations.Count);
         for (var i = 0; i < gltfAnimations.Count; i++)
         {
             var a = gltfAnimations[i];
@@ -270,9 +280,9 @@ internal static class GltfModelLoader
         return result;
     }
 
-    private static Animation ResampleAnimation(
-        SharpGLTF.Schema2.Animation gltfAnim,
-        Skin gltfSkin,
+    private static Animations.Animation ResampleAnimation(
+        GltfAnimation gltfAnim,
+        GltfSkin gltfSkin,
         Skeleton skeleton)
     {
         var duration = (float)gltfAnim.Duration;
@@ -283,7 +293,7 @@ internal static class GltfModelLoader
         var numFrames = Math.Max(2, (int)Math.Ceiling(duration * TargetFps) + 1);
         var frameDuration = duration / (numFrames - 1);
 
-        var nodeToIdx = new Dictionary<Node, int>();
+        var nodeToIdx = new Dictionary<GltfNode, int>();
         for (var i = 0; i < gltfSkin.JointsCount; i++)
         {
             nodeToIdx[gltfSkin.GetJoint(i).Joint] = i;
@@ -339,7 +349,7 @@ internal static class GltfModelLoader
         {
             tracksRo[bone] = tracks[bone];
         }
-        return new Animation(gltfAnim.Name ?? string.Empty, skeleton.NumBones, numFrames, duration, tracksRo);
+        return new Animations.Animation(gltfAnim.Name ?? string.Empty, skeleton.NumBones, numFrames, duration, tracksRo);
     }
 
     // ─── Conversions between System.Numerics (SharpGLTF) and Silk.NET.Maths ───────

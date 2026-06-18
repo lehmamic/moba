@@ -1,4 +1,5 @@
-namespace MOBA.Engine.Graphics;
+using MOBA.Engine.Graphics.Abstractions;
+namespace MOBA.Engine.Graphics.Rendering;
 
 public sealed class Material
 {
