@@ -28,6 +28,7 @@ public sealed class MinionSpawnerComponent : Component
     private readonly NavMesh _navMesh;
     private readonly TeamActor _team;
     private Dictionary<string, IReadOnlyList<Vector3D<float>>>? _laneCorridors;
+    private Vector3D<float> _spawnOrigin;
     private float _time;
     private int _wavesSpawned;
     private int _spawnCounter;
@@ -74,7 +75,7 @@ public sealed class MinionSpawnerComponent : Component
     private void SpawnMinion(MinionType type, IReadOnlyList<Vector3D<float>> corridor)
     {
         var index = _spawnCounter++;
-        var spawnPos = Snap(Fan(_team.SpawnAreaCenter, index, SpawnSpread));
+        var spawnPos = Snap(Fan(_spawnOrigin, index, SpawnSpread));
 
         var minion = new MinionActor(spawnPos, _team.Name, type);
         var move = new MoveTargetComponent(minion, MinionSpeed);
@@ -106,6 +107,24 @@ public sealed class MinionSpawnerComponent : Component
         _navMesh.TryFindNearestPoint(point, out var snapped) ? snapped : point;
 
     /// <summary>
+    /// Minions spawn at the team's nexus. Falls back to the spawn-area centre if
+    /// no nexus building is found (smoke-test scenes).
+    /// </summary>
+    private Vector3D<float> ResolveSpawnOrigin()
+    {
+        foreach (var actor in _scene.Actors)
+        {
+            if (actor is BuildingActor building
+                && string.Equals(building.Definition.Type, "Nexus", StringComparison.Ordinal)
+                && string.Equals(building.Definition.Team, _team.Name, StringComparison.Ordinal))
+            {
+                return building.Definition.Position;
+            }
+        }
+        return _team.SpawnAreaCenter;
+    }
+
+    /// <summary>
     /// Resolves each lane's authored anchor polyline into a navmesh-followed
     /// corner list once (cached): consecutive anchors are joined with
     /// <see cref="NavMesh.TryFindPath"/> so the minions only ever traverse
@@ -118,12 +137,13 @@ public sealed class MinionSpawnerComponent : Component
             return;
         }
 
+        _spawnOrigin = ResolveSpawnOrigin();
         _laneCorridors = new Dictionary<string, IReadOnlyList<Vector3D<float>>>(StringComparer.Ordinal);
         var segment = new List<Vector3D<float>>();
         foreach (var lane in _team.Lanes)
         {
             var corridor = new List<Vector3D<float>>();
-            var prev = Snap(_team.SpawnAreaCenter);
+            var prev = Snap(_spawnOrigin);
             var first = true;
             foreach (var anchor in lane.Waypoints)
             {
