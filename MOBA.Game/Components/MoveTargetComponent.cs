@@ -16,15 +16,14 @@ namespace MOBA.Game.Components;
 /// <c>IPostUpdateSystem.OnPostUpdate</c> after the sim has run.
 ///
 /// <para>
-/// <b>Chase mode.</b> When the owner has an <see cref="AttackComponent"/>
-/// with a <c>CurrentTarget</c> set, the mover switches modes: it stashes the
-/// current lane queue (<see cref="StashPath"/>), walks a straight line toward
-/// the target's live world position, and stops once it is within
-/// <c>AttackComponent.Profile.Range</c> so the attack-tick can fire. When the
-/// target clears the lane queue is popped back (<see cref="RestorePath"/>) and
-/// the actor resumes from exactly the waypoint that was next when combat
-/// started. Single-slot push/pop is enough for our use case — one lane goal
-/// interrupted by one combat episode at a time.
+/// The component is intentionally narrow: it walks whatever queue is set.
+/// Higher-level orchestration (e.g. "switch from lane-walking to chasing a
+/// combat target") lives in the component that owns that decision —
+/// <c>AttackComponent</c> for combat — and is expressed by calling
+/// <see cref="StashPath"/>, then <see cref="SetPath"/> with the new corridor,
+/// then <see cref="RestorePath"/> when the higher-level goal goes away.
+/// Single-slot push/pop is enough for our use case (one lane goal interrupted
+/// by one combat episode at a time).
 /// </para>
 /// </summary>
 public sealed class MoveTargetComponent : Component
@@ -33,7 +32,6 @@ public sealed class MoveTargetComponent : Component
 
     private readonly Queue<Vector3D<float>> _path = new();
     private Queue<Vector3D<float>>? _stashedPath;
-    private Actor? _previousTarget;
 
     public MoveTargetComponent(Actor owner, float speed = 10f) : base(owner) =>
         Speed = speed;
@@ -51,7 +49,8 @@ public sealed class MoveTargetComponent : Component
     /// <summary>
     /// Replaces the current waypoint queue with <paramref name="waypoints"/>.
     /// Used by <c>MovementSystem.HandleMoveCommand</c> after a successful
-    /// <c>NavMesh.TryFindPath</c>.
+    /// <c>NavMesh.TryFindPath</c>, and by combat orchestrators when they
+    /// push a fresh chase corridor.
     /// </summary>
     public void SetPath(IReadOnlyList<Vector3D<float>> waypoints)
     {
@@ -62,12 +61,14 @@ public sealed class MoveTargetComponent : Component
         }
     }
 
+    /// <summary>Empties the live queue without touching the stash. Used by callers that want the actor to stand still.</summary>
+    public void ClearPath() => _path.Clear();
+
     /// <summary>
     /// Copies the live waypoint queue into a single-slot stash and clears the
-    /// live queue. Called automatically on a null → set <see cref="AttackComponent.CurrentTarget"/>
-    /// transition so the lane goal survives the combat episode. A second
-    /// stash before the first restore is a programmer error and overwrites
-    /// silently — single-slot by design.
+    /// live queue. Caller pairs this with <see cref="RestorePath"/> when the
+    /// higher-level goal (e.g. combat chase) ends. A second stash before the
+    /// first restore overwrites silently — single-slot by design.
     /// </summary>
     public void StashPath()
     {
@@ -76,9 +77,9 @@ public sealed class MoveTargetComponent : Component
     }
 
     /// <summary>
-    /// Pops the stashed lane queue back into the live queue, picking up
-    /// lane-walking from exactly the waypoint that was next when combat
-    /// started. No-op if nothing was stashed.
+    /// Pops the stashed queue back into the live queue, picking up walking
+    /// from exactly the waypoint that was next when the stash happened.
+    /// No-op if nothing was stashed.
     /// </summary>
     public void RestorePath()
     {
@@ -96,62 +97,15 @@ public sealed class MoveTargetComponent : Component
 
     public override void OnUpdate(GameTime time)
     {
-        // Combat target acts as a higher-priority destination — when it
-        // appears we stash the lane queue and chase; when it disappears we
-        // pop the stash and resume the lane.
-        var attack = Owner.GetComponent<AttackComponent>();
-        var target = attack?.CurrentTarget;
-        if (target is null && _previousTarget is not null)
-        {
-            RestorePath();
-        }
-        else if (target is not null && _previousTarget is null)
-        {
-            StashPath();
-        }
-        _previousTarget = target;
-
-        if (target is not null)
-        {
-            ChaseTarget(target, attack!.Profile.Range, time.DeltaSeconds);
-            return;
-        }
-
         if (_path.Count == 0)
         {
             return;
         }
-        WalkLane(time.DeltaSeconds);
-    }
 
-    private void ChaseTarget(Actor target, float stopRange, float deltaSeconds)
-    {
-        var position = Owner.Transform.Position;
-        var delta = target.Transform.Position - position;
-        delta.Y = 0f;
-        var distance = delta.Length;
-
-        // Already in attack range — stand still and face the target so the
-        // attack-tick can fire on cadence.
-        if (distance <= stopRange)
-        {
-            FaceDirection(delta);
-            return;
-        }
-
-        var step = Speed * deltaSeconds;
-        var advance = MathF.Min(step, distance - stopRange);
-        position += Vector3D.Normalize(delta) * advance;
-        Owner.Transform.Position = position;
-        FaceDirection(delta);
-    }
-
-    private void WalkLane(float deltaSeconds)
-    {
         // Walk multiple waypoints per tick if speed * dt overshoots the next
         // corner — otherwise tight corner sequences would visibly stutter as
         // each waypoint takes a full tick to consume.
-        var remaining = Speed * deltaSeconds;
+        var remaining = Speed * time.DeltaSeconds;
         var position = Owner.Transform.Position;
         while (_path.Count > 0 && remaining > 0f)
         {
@@ -172,23 +126,19 @@ public sealed class MoveTargetComponent : Component
         }
         Owner.Transform.Position = position;
 
+        // Face the next waypoint (or the current direction of travel if we
+        // arrived mid-tick). The actor's bind-pose forward is +X (see
+        // Transform XML doc); we want a Y-axis rotation that takes +X to
+        // (dx, 0, dz). Silk's Y-rotation in row-vector form sends
+        // (1, 0, 0) → (cos yaw, 0, -sin yaw), so yaw = atan2(-deltaZ, deltaX).
         if (_path.Count > 0)
         {
-            FaceDirection(_path.Peek() - position);
+            var look = _path.Peek() - position;
+            if (look.X != 0f || look.Z != 0f)
+            {
+                var yaw = MathF.Atan2(-look.Z, look.X);
+                Owner.Transform.Rotation = Quaternion<float>.CreateFromYawPitchRoll(yaw, 0f, 0f);
+            }
         }
-    }
-
-    // The actor's bind-pose forward is +X (see Transform XML doc); we want a
-    // Y-axis rotation that takes +X to (dx, 0, dz). Silk's Y-rotation in
-    // row-vector form sends (1, 0, 0) → (cos yaw, 0, -sin yaw), so
-    // yaw = atan2(-deltaZ, deltaX).
-    private void FaceDirection(Vector3D<float> look)
-    {
-        if (look.X == 0f && look.Z == 0f)
-        {
-            return;
-        }
-        var yaw = MathF.Atan2(-look.Z, look.X);
-        Owner.Transform.Rotation = Quaternion<float>.CreateFromYawPitchRoll(yaw, 0f, 0f);
     }
 }
