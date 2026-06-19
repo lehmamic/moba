@@ -104,6 +104,7 @@ public sealed class MinionSpawnerComponent : Component
     {
         const float goldenAngle = 2.39996323f;
         var angle = index * goldenAngle;
+
         return center + new Vector3D<float>(MathF.Cos(angle) * radius, 0f, MathF.Sin(angle) * radius);
     }
 
@@ -125,6 +126,7 @@ public sealed class MinionSpawnerComponent : Component
                 return building.Definition.Position;
             }
         }
+
         return _team.SpawnAreaCenter;
     }
 
@@ -168,6 +170,7 @@ public sealed class MinionSpawnerComponent : Component
                 prev = segment[^1];
                 first = false;
             }
+
             _laneCorridors[lane.Lane] = corridor;
         }
     }
