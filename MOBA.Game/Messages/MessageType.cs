@@ -28,4 +28,11 @@ public enum MessageType : byte
     /// <c>ActorReplicationSystem.BroadcastHealthChanges</c>.
     /// </summary>
     ActorHealth = 8,
+    /// <summary>
+    /// Client → Server: "engage this network-identified actor as my
+    /// basic-attack target." Resolved by <c>MovementSystem</c> into a write to
+    /// the player's <c>AttackComponent.CurrentTarget</c>; the attack component
+    /// drives chase + cadence from there.
+    /// </summary>
+    AttackCommand = 9,
 }

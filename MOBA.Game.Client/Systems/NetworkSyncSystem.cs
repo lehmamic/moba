@@ -141,7 +141,7 @@ public sealed class NetworkSyncSystem : IEngineSystem
             && actor is PlayerActor player
             && player.GetComponent<LocalPlayerInputComponent>() is null)
         {
-            _ = new LocalPlayerInputComponent(player, _cameras, _transport, _navMesh);
+            _ = new LocalPlayerInputComponent(player, _cameras, _transport, _navMesh, _scene);
             _cameras.TopDown.CenterOn(player.Transform.Position);
         }
     }
@@ -208,7 +208,7 @@ public sealed class NetworkSyncSystem : IEngineSystem
             sizeWorldUnits: new Vector2D<float>(2f, 0.25f));
         if (_localPlayerNetworkId == message.Id)
         {
-            _ = new LocalPlayerInputComponent(player, _cameras, _transport, _navMesh);
+            _ = new LocalPlayerInputComponent(player, _cameras, _transport, _navMesh, _scene);
             _cameras.TopDown.CenterOn(player.Transform.Position);
         }
         _scene.AddActor(player);

@@ -90,12 +90,15 @@ public sealed class MovementSystem : IEngineSystem, IPostUpdateSystem
     {
         using var stream = new MemoryStream(payload.ToArray());
         using var reader = new BinaryReader(stream);
-        var type = (MessageType)reader.ReadByte();
-        if (type != MessageType.MoveCommand)
+        switch ((MessageType)reader.ReadByte())
         {
-            return;
+            case MessageType.MoveCommand:
+                HandleMoveCommand(sender, MoveCommandMessage.ReadPayload(reader));
+                break;
+            case MessageType.AttackCommand:
+                HandleAttackCommand(sender, AttackCommandMessage.ReadPayload(reader));
+                break;
         }
-        HandleMoveCommand(sender, MoveCommandMessage.ReadPayload(reader));
     }
 
     private void HandleMoveCommand(NetClientId sender, MoveCommandMessage command)
@@ -106,6 +109,7 @@ public sealed class MovementSystem : IEngineSystem, IPostUpdateSystem
             // Move command from a client that hasn't joined yet — ignore.
             return;
         }
+
         var moveTarget = actor.GetComponent<MoveTargetComponent>();
         if (moveTarget is null)
         {
@@ -138,6 +142,12 @@ public sealed class MovementSystem : IEngineSystem, IPostUpdateSystem
 
         moveTarget.SetPath(waypoints);
 
+        // A fresh move command cancels any in-flight attack chase.
+        if (actor.GetComponent<AttackComponent>() is { } cancelAttack)
+        {
+            cancelAttack.CurrentTarget = null;
+        }
+
         // Authoritative path snapshot to every client — same fan-out as the
         // marker spawn. Clients render it (F3 overlay) and keep it on the
         // actor for later minimap use; they never pathfind themselves.
@@ -156,6 +166,32 @@ public sealed class MovementSystem : IEngineSystem, IPostUpdateSystem
 
         var spawn = new ActorSpawnMessage(markerId, ActorKind.Marker, markerPosition.X, markerPosition.Y, markerPosition.Z, TeamId.None);
         _transport.SendToAll(NetChannel.Reliable, spawn.Serialize());
+    }
+
+    private void HandleAttackCommand(NetClientId sender, AttackCommandMessage command)
+    {
+        var actor = _connections.GetPlayerActor(sender);
+        if (actor?.GetComponent<AttackComponent>() is not { } attack)
+        {
+            return;
+        }
+
+        Actor? target = null;
+        foreach (var candidate in _scene.Actors)
+        {
+            if (candidate.GetComponent<NetworkIdentityComponent>()?.Id == command.TargetNetworkId)
+            {
+                target = candidate;
+                break;
+            }
+        }
+
+        if (target is null)
+        {
+            return;
+        }
+
+        attack.CurrentTarget = target;
     }
 
     private void BroadcastPositionUpdate(Actor actor, uint id)
