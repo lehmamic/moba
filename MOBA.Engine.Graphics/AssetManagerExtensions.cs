@@ -50,7 +50,7 @@ public static class AssetManagerExtensions
     /// character glTFs, terrain mesh, building / monster prefabs all flow through
     /// the same cache. Keys are repo-relative paths under <paramref name="assetsRoot"/>
     /// without an extension, e.g. <c>"models/knight-garen"</c>,
-    /// <c>"maps/dimension-rift"</c>, <c>"buildings/blue-tower"</c>. The loader
+    /// <c>"maps/dimension-rift"</c>, <c>"buildings/order-tower"</c>. The loader
     /// dispatches on extension: <c>{assetsRoot}/{key}.glb</c> goes through
     /// <see cref="GltfModelLoader"/>, <c>{assetsRoot}/{key}.obj</c> through
     /// <see cref="ObjModelLoader"/>; GLB wins when both exist.

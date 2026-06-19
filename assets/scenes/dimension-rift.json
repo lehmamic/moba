@@ -56,9 +56,9 @@
   "Actors": [
     {
       "Type": "Team",
-      "Id": "blue_team",
+      "Id": "order_team",
       "Properties": {
-        "Name": "Blue",
+        "Name": "Order",
         "SpawnAreaCenter": [
           82.27,
           1,
@@ -68,9 +68,9 @@
     },
     {
       "Type": "Team",
-      "Id": "red_team",
+      "Id": "chaos_team",
       "Properties": {
-        "Name": "Red",
+        "Name": "Chaos",
         "SpawnAreaCenter": [
           -68.84,
           1,
@@ -104,7 +104,7 @@
     },
     {
       "Type": "Building",
-      "Id": "blue_nexus",
+      "Id": "order_nexus",
       "Transform": {
         "Position": [
           67.183,
@@ -124,13 +124,13 @@
       },
       "Properties": {
         "BuildingType": "Nexus",
-        "File": "assets/buildings/blue-nexus.glb",
-        "Team": "Blue"
+        "File": "assets/buildings/order-nexus.glb",
+        "Team": "Order"
       }
     },
     {
       "Type": "Building",
-      "Id": "red_nexus",
+      "Id": "chaos_nexus",
       "Transform": {
         "Position": [
           -53.651,
@@ -150,13 +150,13 @@
       },
       "Properties": {
         "BuildingType": "Nexus",
-        "File": "assets/buildings/red-nexus.glb",
-        "Team": "Red"
+        "File": "assets/buildings/chaos-nexus.glb",
+        "Team": "Chaos"
       }
     },
     {
       "Type": "Building",
-      "Id": "blue_tower_1",
+      "Id": "order_tower_1",
       "Transform": {
         "Position": [
           53.052,
@@ -176,13 +176,13 @@
       },
       "Properties": {
         "BuildingType": "Tower",
-        "File": "assets/buildings/blue-tower.glb",
-        "Team": "Blue"
+        "File": "assets/buildings/order-tower.glb",
+        "Team": "Order"
       }
     },
     {
       "Type": "Building",
-      "Id": "blue_tower_2",
+      "Id": "order_tower_2",
       "Transform": {
         "Position": [
           42.687,
@@ -202,13 +202,13 @@
       },
       "Properties": {
         "BuildingType": "Tower",
-        "File": "assets/buildings/blue-tower.glb",
-        "Team": "Blue"
+        "File": "assets/buildings/order-tower.glb",
+        "Team": "Order"
       }
     },
     {
       "Type": "Building",
-      "Id": "blue_tower_3",
+      "Id": "order_tower_3",
       "Transform": {
         "Position": [
           75.192,
@@ -228,13 +228,13 @@
       },
       "Properties": {
         "BuildingType": "Tower",
-        "File": "assets/buildings/blue-tower.glb",
-        "Team": "Blue"
+        "File": "assets/buildings/order-tower.glb",
+        "Team": "Order"
       }
     },
     {
       "Type": "Building",
-      "Id": "blue_tower_4",
+      "Id": "order_tower_4",
       "Transform": {
         "Position": [
           36.064,
@@ -254,13 +254,13 @@
       },
       "Properties": {
         "BuildingType": "Tower",
-        "File": "assets/buildings/blue-tower.glb",
-        "Team": "Blue"
+        "File": "assets/buildings/order-tower.glb",
+        "Team": "Order"
       }
     },
     {
       "Type": "Building",
-      "Id": "blue_tower_5",
+      "Id": "order_tower_5",
       "Transform": {
         "Position": [
           24.269,
@@ -280,13 +280,13 @@
       },
       "Properties": {
         "BuildingType": "Tower",
-        "File": "assets/buildings/blue-tower.glb",
-        "Team": "Blue"
+        "File": "assets/buildings/order-tower.glb",
+        "Team": "Order"
       }
     },
     {
       "Type": "Building",
-      "Id": "blue_tower_6",
+      "Id": "order_tower_6",
       "Transform": {
         "Position": [
           17.164,
@@ -306,13 +306,13 @@
       },
       "Properties": {
         "BuildingType": "Tower",
-        "File": "assets/buildings/blue-tower.glb",
-        "Team": "Blue"
+        "File": "assets/buildings/order-tower.glb",
+        "Team": "Order"
       }
     },
     {
       "Type": "Building",
-      "Id": "blue_tower_7",
+      "Id": "order_tower_7",
       "Transform": {
         "Position": [
           -26.743,
@@ -332,13 +332,13 @@
       },
       "Properties": {
         "BuildingType": "Tower",
-        "File": "assets/buildings/blue-tower.glb",
-        "Team": "Blue"
+        "File": "assets/buildings/order-tower.glb",
+        "Team": "Order"
       }
     },
     {
       "Type": "Building",
-      "Id": "blue_tower_8",
+      "Id": "order_tower_8",
       "Transform": {
         "Position": [
           76.909,
@@ -358,13 +358,13 @@
       },
       "Properties": {
         "BuildingType": "Tower",
-        "File": "assets/buildings/blue-tower.glb",
-        "Team": "Blue"
+        "File": "assets/buildings/order-tower.glb",
+        "Team": "Order"
       }
     },
     {
       "Type": "Building",
-      "Id": "blue_tower_9",
+      "Id": "order_tower_9",
       "Transform": {
         "Position": [
           76.889,
@@ -384,13 +384,13 @@
       },
       "Properties": {
         "BuildingType": "Tower",
-        "File": "assets/buildings/blue-tower.glb",
-        "Team": "Blue"
+        "File": "assets/buildings/order-tower.glb",
+        "Team": "Order"
       }
     },
     {
       "Type": "Building",
-      "Id": "red_tower_1",
+      "Id": "chaos_tower_1",
       "Transform": {
         "Position": [
           -39.616,
@@ -410,13 +410,13 @@
       },
       "Properties": {
         "BuildingType": "Tower",
-        "File": "assets/buildings/red-tower.glb",
-        "Team": "Red"
+        "File": "assets/buildings/chaos-tower.glb",
+        "Team": "Chaos"
       }
     },
     {
       "Type": "Building",
-      "Id": "red_tower_2",
+      "Id": "chaos_tower_2",
       "Transform": {
         "Position": [
           -62.058,
@@ -436,13 +436,13 @@
       },
       "Properties": {
         "BuildingType": "Tower",
-        "File": "assets/buildings/red-tower.glb",
-        "Team": "Red"
+        "File": "assets/buildings/chaos-tower.glb",
+        "Team": "Chaos"
       }
     },
     {
       "Type": "Building",
-      "Id": "red_tower_3",
+      "Id": "chaos_tower_3",
       "Transform": {
         "Position": [
           -29.516,
@@ -462,13 +462,13 @@
       },
       "Properties": {
         "BuildingType": "Tower",
-        "File": "assets/buildings/red-tower.glb",
-        "Team": "Red"
+        "File": "assets/buildings/chaos-tower.glb",
+        "Team": "Chaos"
       }
     },
     {
       "Type": "Building",
-      "Id": "red_tower_4",
+      "Id": "chaos_tower_4",
       "Transform": {
         "Position": [
           -3.895,
@@ -488,13 +488,13 @@
       },
       "Properties": {
         "BuildingType": "Tower",
-        "File": "assets/buildings/red-tower.glb",
-        "Team": "Red"
+        "File": "assets/buildings/chaos-tower.glb",
+        "Team": "Chaos"
       }
     },
     {
       "Type": "Building",
-      "Id": "red_tower_5",
+      "Id": "chaos_tower_5",
       "Transform": {
         "Position": [
           39.923,
@@ -514,13 +514,13 @@
       },
       "Properties": {
         "BuildingType": "Tower",
-        "File": "assets/buildings/red-tower.glb",
-        "Team": "Red"
+        "File": "assets/buildings/chaos-tower.glb",
+        "Team": "Chaos"
       }
     },
     {
       "Type": "Building",
-      "Id": "red_tower_6",
+      "Id": "chaos_tower_6",
       "Transform": {
         "Position": [
           -22.731,
@@ -540,13 +540,13 @@
       },
       "Properties": {
         "BuildingType": "Tower",
-        "File": "assets/buildings/red-tower.glb",
-        "Team": "Red"
+        "File": "assets/buildings/chaos-tower.glb",
+        "Team": "Chaos"
       }
     },
     {
       "Type": "Building",
-      "Id": "red_tower_7",
+      "Id": "chaos_tower_7",
       "Transform": {
         "Position": [
           -10.728,
@@ -566,13 +566,13 @@
       },
       "Properties": {
         "BuildingType": "Tower",
-        "File": "assets/buildings/red-tower.glb",
-        "Team": "Red"
+        "File": "assets/buildings/chaos-tower.glb",
+        "Team": "Chaos"
       }
     },
     {
       "Type": "Building",
-      "Id": "red_tower_8",
+      "Id": "chaos_tower_8",
       "Transform": {
         "Position": [
           -63.849,
@@ -592,13 +592,13 @@
       },
       "Properties": {
         "BuildingType": "Tower",
-        "File": "assets/buildings/red-tower.glb",
-        "Team": "Red"
+        "File": "assets/buildings/chaos-tower.glb",
+        "Team": "Chaos"
       }
     },
     {
       "Type": "Building",
-      "Id": "red_tower_9",
+      "Id": "chaos_tower_9",
       "Transform": {
         "Position": [
           -63.873,
@@ -618,8 +618,8 @@
       },
       "Properties": {
         "BuildingType": "Tower",
-        "File": "assets/buildings/red-tower.glb",
-        "Team": "Red"
+        "File": "assets/buildings/chaos-tower.glb",
+        "Team": "Chaos"
       }
     },
     {
@@ -754,7 +754,7 @@
     },
     {
       "Type": "Monster",
-      "Id": "red_minion_1",
+      "Id": "chaos_minion_1",
       "Transform": {
         "Position": [
           -42.976,
@@ -774,13 +774,13 @@
       },
       "Properties": {
         "MonsterType": "Minion",
-        "File": "assets/monsters/red-minion.glb",
-        "Team": "Red"
+        "File": "assets/monsters/minion_chaos.glb",
+        "Team": "Chaos"
       }
     },
     {
       "Type": "Monster",
-      "Id": "red_minion_2",
+      "Id": "chaos_minion_2",
       "Transform": {
         "Position": [
           -52.386,
@@ -800,13 +800,13 @@
       },
       "Properties": {
         "MonsterType": "Minion",
-        "File": "assets/monsters/red-minion.glb",
-        "Team": "Red"
+        "File": "assets/monsters/minion_chaos.glb",
+        "Team": "Chaos"
       }
     },
     {
       "Type": "Monster",
-      "Id": "red_minion_3",
+      "Id": "chaos_minion_3",
       "Transform": {
         "Position": [
           -61.654,
@@ -826,13 +826,13 @@
       },
       "Properties": {
         "MonsterType": "Minion",
-        "File": "assets/monsters/red-minion.glb",
-        "Team": "Red"
+        "File": "assets/monsters/minion_chaos.glb",
+        "Team": "Chaos"
       }
     },
     {
       "Type": "Monster",
-      "Id": "red_minion_4",
+      "Id": "chaos_minion_4",
       "Transform": {
         "Position": [
           -36.383,
@@ -852,13 +852,13 @@
       },
       "Properties": {
         "MonsterType": "Minion",
-        "File": "assets/monsters/red-minion.glb",
-        "Team": "Red"
+        "File": "assets/monsters/minion_chaos.glb",
+        "Team": "Chaos"
       }
     },
     {
       "Type": "Monster",
-      "Id": "red_minion_5",
+      "Id": "chaos_minion_5",
       "Transform": {
         "Position": [
           -32.818,
@@ -878,13 +878,13 @@
       },
       "Properties": {
         "MonsterType": "Minion",
-        "File": "assets/monsters/red-minion.glb",
-        "Team": "Red"
+        "File": "assets/monsters/minion_chaos.glb",
+        "Team": "Chaos"
       }
     },
     {
       "Type": "Monster",
-      "Id": "blue_minion_1",
+      "Id": "order_minion_1",
       "Transform": {
         "Position": [
           49.979,
@@ -904,13 +904,13 @@
       },
       "Properties": {
         "MonsterType": "Minion",
-        "File": "assets/monsters/blue-minion.glb",
-        "Team": "Blue"
+        "File": "assets/monsters/minion_order.glb",
+        "Team": "Order"
       }
     },
     {
       "Type": "Monster",
-      "Id": "blue_minion_2",
+      "Id": "order_minion_2",
       "Transform": {
         "Position": [
           49.302,
@@ -930,13 +930,13 @@
       },
       "Properties": {
         "MonsterType": "Minion",
-        "File": "assets/monsters/blue-minion.glb",
-        "Team": "Blue"
+        "File": "assets/monsters/minion_order.glb",
+        "Team": "Order"
       }
     },
     {
       "Type": "Monster",
-      "Id": "blue_minion_3",
+      "Id": "order_minion_3",
       "Transform": {
         "Position": [
           63.616,
@@ -956,13 +956,13 @@
       },
       "Properties": {
         "MonsterType": "Minion",
-        "File": "assets/monsters/blue-minion.glb",
-        "Team": "Blue"
+        "File": "assets/monsters/minion_order.glb",
+        "Team": "Order"
       }
     },
     {
       "Type": "Monster",
-      "Id": "blue_minion_4",
+      "Id": "order_minion_4",
       "Transform": {
         "Position": [
           73.268,
@@ -982,8 +982,8 @@
       },
       "Properties": {
         "MonsterType": "Minion",
-        "File": "assets/monsters/blue-minion.glb",
-        "Team": "Blue"
+        "File": "assets/monsters/minion_order.glb",
+        "Team": "Order"
       }
     }
   ]

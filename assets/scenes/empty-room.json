@@ -63,8 +63,8 @@
       },
       "Properties": {
         "BuildingType": "Tower",
-        "File": "assets/buildings/blue-tower.glb",
-        "Team": "Blue"
+        "File": "assets/buildings/order-tower.glb",
+        "Team": "Order"
       }
     }
   ]

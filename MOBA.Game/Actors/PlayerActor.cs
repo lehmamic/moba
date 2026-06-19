@@ -13,7 +13,7 @@ namespace MOBA.Game.Actors;
 /// stay visual + position-driven only.
 ///
 /// <para>
-/// <see cref="Team"/> is the team name (<c>"Blue"</c> / <c>"Red"</c>) the
+/// <see cref="Team"/> is the team name (<c>"Order"</c> / <c>"Chaos"</c>) the
 /// server assigned at join time. Used for spawn placement today; future
 /// damage routing, projectile filtering and HUD colouring will read it too.
 /// </para>

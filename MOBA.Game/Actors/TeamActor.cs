@@ -5,7 +5,7 @@ using Silk.NET.Maths;
 namespace MOBA.Game.Actors;
 
 /// <summary>
-/// One of the two competing teams. Holds the team identity (Blue / Red) and
+/// One of the two competing teams. Holds the team identity (Order / Chaos) and
 /// the spawn-area centre that <c>PlayerConnectionSystem</c> uses to drop new
 /// players into their base. Future team-level state (score, banned heroes,
 /// objective timers) lives here too — either as properties or as components

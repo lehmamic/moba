@@ -27,14 +27,14 @@ release.
 |---|---|
 | `assets/maps/dimension-rift.glb` | Terrain mesh with skybox cliffs (entities removed) |
 | `assets/maps/dimension-rift.json` | Map dimensions + entity positions + this attribution |
-| `assets/buildings/blue-nexus.glb` | Blue side Nexus mesh |
-| `assets/buildings/red-nexus.glb` | Red side Nexus mesh |
-| `assets/buildings/blue-tower.glb` | Blue side tower mesh (9 instance positions in JSON) |
-| `assets/buildings/red-tower.glb` | Red side tower mesh (9 instance positions in JSON) |
+| `assets/buildings/order-nexus.glb` | Order side Nexus mesh |
+| `assets/buildings/chaos-nexus.glb` | Chaos side Nexus mesh |
+| `assets/buildings/order-tower.glb` | Order side tower mesh (9 instance positions in JSON) |
+| `assets/buildings/chaos-tower.glb` | Chaos side tower mesh (9 instance positions in JSON) |
 | `assets/monsters/blue-buff.glb` | Blue buff monster mesh |
 | `assets/monsters/red-buff.glb` | Red buff monster mesh |
 | `assets/monsters/lizard.glb` | Lizard mob mesh |
 | `assets/monsters/bear.glb` | Bear mob mesh |
 | `assets/monsters/deer.glb` | Deer mob mesh |
-| `assets/monsters/red-minion.glb` | Red side minion mesh (5 spawn positions in JSON) |
-| `assets/monsters/blue-minion.glb` | Blue side minion mesh (4 spawn positions in JSON) |
+| `assets/monsters/minion_chaos.glb` | Chaos side legacy minion mesh |
+| `assets/monsters/minion_order.glb` | Order side legacy minion mesh |

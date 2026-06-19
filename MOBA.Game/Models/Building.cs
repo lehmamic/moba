@@ -41,7 +41,7 @@ public sealed class Building
 
     public Vector3D<float> Scale { get; }
 
-    /// <summary>Short asset name (filename without extension), e.g. <c>blue-tower</c>.</summary>
+    /// <summary>Short asset name (filename without extension), e.g. <c>order-tower</c>.</summary>
     public string MeshAsset { get; }
 
     public static Building FromDefinition(BuildingDefinition definition) =>

@@ -27,7 +27,7 @@ internal static class EntityTransform
     /// <summary>
     /// Strips the leading <c>assets/</c> and the file extension so the result is
     /// the key the unified model cache expects: e.g.
-    /// <c>"assets/buildings/blue-tower.glb"</c> → <c>"buildings/blue-tower"</c>.
+    /// <c>"assets/buildings/order-tower.glb"</c> → <c>"buildings/order-tower"</c>.
     /// </summary>
     public static string MeshAssetFromFile(string file)
     {
