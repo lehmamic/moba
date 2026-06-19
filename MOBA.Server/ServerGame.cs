@@ -36,7 +36,7 @@ public sealed class ServerGame : GameHost
         // actor type means appending one new factory class and one entry here.
         var registry = new ActorFactoryRegistry([
             new MapActorFactory(assets),
-            new BuildingActorFactory(),
+            new BuildingActorFactory(Game.Scene),
             new MonsterActorFactory(),
             new TeamActorFactory(),
         ]);
@@ -61,7 +61,7 @@ public sealed class ServerGame : GameHost
         // MoveCommands and broadcasts position updates.
         var transport = new RiptideServerTransport();
         AddSystem(transport);
-        var connections = new PlayerConnectionSystem(Game.Scene, transport);
+        var connections = new PlayerConnectionSystem(Game.Scene, transport, navMesh);
         AddSystem(connections);
         // Generic replication runs before movement broadcasting so a newly
         // spawned descriptor actor is announced (and gets its network id) in the

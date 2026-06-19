@@ -4,6 +4,7 @@ using MOBA.Engine.Networking;
 using MOBA.Game.Actors;
 using MOBA.Game.Components;
 using MOBA.Game.Messages;
+using MOBA.Game.Models;
 using Silk.NET.Maths;
 
 namespace MOBA.Game.Systems;
@@ -39,14 +40,16 @@ public sealed class PlayerConnectionSystem : IEngineSystem
 
     private readonly Scene _scene;
     private readonly IServerNetTransport _transport;
+    private readonly NavMesh _navMesh;
     private readonly Dictionary<NetClientId, PlayerActor> _actorByClient = [];
     private uint _nextPlayerNetworkId = FirstPlayerNetworkId;
     private int _nextSpawnSlot;
 
-    public PlayerConnectionSystem(Scene scene, IServerNetTransport transport)
+    public PlayerConnectionSystem(Scene scene, IServerNetTransport transport, NavMesh navMesh)
     {
         _scene = scene;
         _transport = transport;
+        _navMesh = navMesh;
     }
 
     /// <summary>
@@ -102,6 +105,9 @@ public sealed class PlayerConnectionSystem : IEngineSystem
         var spawnPosition = SpawnPositionFor(team);
         var actor = new PlayerActor(spawnPosition, team?.Name ?? "Unassigned");
         _ = new NetworkIdentityComponent(actor, networkId);
+        // Combat precedes the mover so its decisions land on the same tick the
+        // mover walks. Champion has no AggroComponent — the human picks targets.
+        _ = new AttackComponent(actor, AttackProfiles.ForChampion(), _navMesh);
         _ = new MoveTargetComponent(actor);
         _scene.AddActor(actor);
         _actorByClient[sender] = actor;
@@ -128,6 +134,7 @@ public sealed class PlayerConnectionSystem : IEngineSystem
             {
                 continue;
             }
+
             var otherId = otherActor.GetComponent<NetworkIdentityComponent>()!.Id;
             var pos = otherActor.Transform.Position;
             var catchUp = new ActorSpawnMessage(otherId, ActorKind.Player, pos.X, pos.Y, pos.Z, TeamIds.FromName(otherActor.Team));
@@ -143,6 +150,7 @@ public sealed class PlayerConnectionSystem : IEngineSystem
         {
             return;
         }
+
         var id = actor.GetComponent<NetworkIdentityComponent>()!.Id;
         _scene.RemoveActor(actor);
         _actorByClient.Remove(client);
@@ -165,6 +173,7 @@ public sealed class PlayerConnectionSystem : IEngineSystem
         {
             return null;
         }
+
         var counts = teams.ToDictionary(t => t, _ => 0);
         foreach (var p in _actorByClient.Values)
         {
@@ -174,6 +183,7 @@ public sealed class PlayerConnectionSystem : IEngineSystem
                 counts[match]++;
             }
         }
+
         var min = counts.Values.Min();
         var candidates = counts.Where(kv => kv.Value == min).Select(kv => kv.Key).ToList();
         return candidates[Random.Shared.Next(candidates.Count)];
@@ -191,10 +201,12 @@ public sealed class PlayerConnectionSystem : IEngineSystem
         {
             return NeutralSpawnSlot();
         }
+
         var teamCount = _actorByClient.Values.Count(p =>
             string.Equals(p.Team, team.Name, StringComparison.Ordinal));
         var direction = (teamCount % 2 == 0) ? 1 : -1;
         var offset = ((teamCount + 1) / 2) * SpawnSlotSpacing * direction;
+
         return new Vector3D<float>(
             team.SpawnAreaCenter.X + offset,
             team.SpawnAreaCenter.Y,
@@ -206,6 +218,7 @@ public sealed class PlayerConnectionSystem : IEngineSystem
         var slot = _nextSpawnSlot++;
         var direction = (slot % 2 == 0) ? 1 : -1;
         var offset = ((slot + 1) / 2) * SpawnSlotSpacing * direction;
+
         return new Vector3D<float>(offset, 1f, 0f);
     }
 }

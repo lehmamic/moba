@@ -78,6 +78,10 @@ public sealed class MinionSpawnerComponent : Component
         var spawnPos = Snap(Fan(_spawnOrigin, index, SpawnSpread));
 
         var minion = new MinionActor(spawnPos, _team.Name, type);
+        // Combat components precede the mover so their decisions land on the
+        // same tick the mover executes (see AttackComponent XML docs).
+        _ = new AggroComponent(minion, AggroProfiles.ForMinion(type), _scene);
+        _ = new AttackComponent(minion, AttackProfiles.ForMinion(type), _navMesh);
         var move = new MoveTargetComponent(minion, MinionSpeed);
         _ = new ReplicatedSpawnComponent(minion, ActorKind.Minion, TeamIds.FromName(_team.Name), (byte)type);
 
@@ -140,23 +144,27 @@ public sealed class MinionSpawnerComponent : Component
         _spawnOrigin = ResolveSpawnOrigin();
         _laneCorridors = new Dictionary<string, IReadOnlyList<Vector3D<float>>>(StringComparer.Ordinal);
         var segment = new List<Vector3D<float>>();
+
         foreach (var lane in _team.Lanes)
         {
             var corridor = new List<Vector3D<float>>();
             var prev = Snap(_spawnOrigin);
             var first = true;
+
             foreach (var anchor in lane.Waypoints)
             {
                 if (!_navMesh.TryFindPath(prev, anchor, segment) || segment.Count == 0)
                 {
                     continue;
                 }
+
                 // TryFindPath returns the snapped start as the first corner; skip
                 // it on later segments so the joints don't duplicate.
                 for (var i = first ? 0 : 1; i < segment.Count; i++)
                 {
                     corridor.Add(segment[i]);
                 }
+
                 prev = segment[^1];
                 first = false;
             }
