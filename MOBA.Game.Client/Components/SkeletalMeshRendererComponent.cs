@@ -3,6 +3,7 @@ using MOBA.Engine.Core.Hosting;
 using MOBA.Engine.Graphics.Abstractions;
 using MOBA.Engine.Graphics.Animations;
 using MOBA.Engine.Graphics.Rendering;
+using MOBA.Game.Components;
 using Silk.NET.Maths;
 
 namespace MOBA.Game.Client.Components;
@@ -10,16 +11,25 @@ namespace MOBA.Game.Client.Components;
 /// <summary>
 /// Skeletal-mesh render component (client-only). Mirrors Madhav <i>Game
 /// Programming in C++</i> ch.12 <c>SkeletalMeshComponent</c> + the
-/// <c>FollowActor.mMoving</c> idle/walk state machine, with one MOBA-specific
-/// twist: the "is moving" decision is derived from observed position changes,
-/// not from input, because input is owned by the server in our setup.
+/// <c>FollowActor.mMoving</c> idle/walk state machine, with two MOBA-specific
+/// twists:
+/// <list type="bullet">
+///   <item>The "is moving" decision is derived from observed position changes,
+///         not from input, because input is owned by the server in our setup.</item>
+///   <item>When the owner's <see cref="HealthComponent"/> drops to zero, the
+///         component locks into a death state and plays the model's "death" /
+///         "defeated" clip once, freezing on the final frame instead of
+///         looping. The clip-selection state machine lives entirely inside
+///         this component (single Madhav-style animation component); no
+///         separate <c>DeathAnimationComponent</c> hangs off the actor.</item>
+/// </list>
 ///
 /// <para>
-/// Each tick: advance <see cref="_animTime"/> by <c>dt × playRate</c>, wrap at
-/// the clip's duration, and recompute the matrix palette via
-/// <see cref="Animation.GetGlobalPoseAtTime"/>. When the position delta crosses
-/// the movement threshold, snap to the walk clip; when motion stops, snap back
-/// to idle. No crossfade for the first cut.
+/// Each tick: figure out which clip the actor should be playing (death > move
+/// > idle), swap and reset the playhead on a clip change, advance
+/// <see cref="_animTime"/> by <c>dt × playRate</c>, wrap at duration for
+/// looping clips or clamp at duration for one-shots, and recompute the
+/// matrix palette via <see cref="Animation.GetGlobalPoseAtTime"/>.
 /// </para>
 /// </summary>
 public sealed class SkeletalMeshRendererComponent : Component, ISkinnedRenderable
@@ -36,8 +46,10 @@ public sealed class SkeletalMeshRendererComponent : Component, ISkinnedRenderabl
     private readonly Model _model;
     private readonly Animation _idleClip;
     private readonly Animation _moveClip;
+    private readonly Animation? _deathClip;
     private float _animTime;
-    private bool _isMoving;
+    private AnimState _state = AnimState.Idle;
+    private bool _currentClipLoops = true;
     private float _timeSinceLastMovement = float.PositiveInfinity;
     private Vector3D<float> _lastPosition;
 
@@ -47,6 +59,7 @@ public sealed class SkeletalMeshRendererComponent : Component, ISkinnedRenderabl
         {
             throw new ArgumentException("Model has no skeleton — use MeshRendererComponent for static meshes.", nameof(model));
         }
+
         if (model.Animations.Count < 2)
         {
             throw new ArgumentException(
@@ -65,10 +78,12 @@ public sealed class SkeletalMeshRendererComponent : Component, ISkinnedRenderabl
         // Pick idle = longest, locomotion = shortest non-idle. Tripo / Mixamo exports
         // name clips uninformatively (NlaTrack / NlaTrack.001 …); the heuristic
         // also tries explicit name hints first (Mixamo-style "idle" / "run" / "walk").
+        // Death clip is optional — models without one fall back to a frozen idle pose.
         (_idleClip, _moveClip) = PickIdleAndMoveClips(model.Animations);
+        _deathClip = PickDeathClip(model.Animations);
         CurrentClip = _idleClip;
         _lastPosition = owner.Transform.Position;
-        PlayClip(_idleClip);
+        PlayClip(_idleClip, looping: true);
     }
 
     public IReadOnlyList<ModelPart> Parts { get; }
@@ -84,13 +99,75 @@ public sealed class SkeletalMeshRendererComponent : Component, ISkinnedRenderabl
 
     public float PlayRate { get; set; } = 1f;
 
+    /// <summary>
+    /// True once the playhead reaches the duration of a non-looping clip
+    /// (the death / defeated freeze frame). Looping clips never report
+    /// finished — they just wrap. External observers (e.g. a future "fade
+    /// out on death-finished" effect) can poll this without subscribing
+    /// to any events.
+    /// </summary>
+    public bool IsCurrentClipFinished => !_currentClipLoops && _animTime >= CurrentClip.Duration;
+
     public override void OnUpdate(GameTime time)
     {
-        // 1. Movement-state machine. Don't trust the per-frame position-changed
-        // check directly — server snapshots arrive at 30 Hz while we render at
-        // 60 Hz, so in the gap frames the position is "unchanged" and the
-        // state would flicker. Use a decaying "time since last observed
-        // movement" instead; treat as walking if that's recent enough.
+        var desired = DesiredState(time.DeltaSeconds);
+        if (desired != _state)
+        {
+            _state = desired;
+            switch (desired)
+            {
+                case AnimState.Death:
+                    PlayClip(_deathClip ?? _idleClip, looping: false);
+                    break;
+                case AnimState.Move:
+                    PlayClip(_moveClip, looping: true);
+                    break;
+                default:
+                    PlayClip(_idleClip, looping: true);
+                    break;
+            }
+        }
+
+        _animTime += time.DeltaSeconds * PlayRate;
+        if (_currentClipLoops)
+        {
+            while (_animTime > CurrentClip.Duration)
+            {
+                _animTime -= CurrentClip.Duration;
+            }
+        }
+        else
+        {
+            // Clamp at the final frame so the corpse freezes in pose instead
+            // of jumping back to the start.
+            if (_animTime > CurrentClip.Duration)
+            {
+                _animTime = CurrentClip.Duration;
+            }
+        }
+
+        ComputeMatrixPalette();
+    }
+
+    /// <summary>
+    /// Picks the clip the actor should be playing this tick. Death is sticky
+    /// — once entered we never leave it. Otherwise the movement state machine
+    /// produces idle / move based on observed position changes with a small
+    /// hold window so the 30 Hz server snapshot cadence doesn't flicker the
+    /// state every frame between snapshots.
+    /// </summary>
+    private AnimState DesiredState(float deltaSeconds)
+    {
+        if (_state == AnimState.Death)
+        {
+            return AnimState.Death;
+        }
+
+        if (Owner.GetComponent<HealthComponent>() is { Current: <= 0f })
+        {
+            return AnimState.Death;
+        }
+
         var currentPos = Owner.Transform.Position;
         var posChanged = (currentPos - _lastPosition).Length > MovementThreshold;
         _lastPosition = currentPos;
@@ -101,28 +178,16 @@ public sealed class SkeletalMeshRendererComponent : Component, ISkinnedRenderabl
         }
         else
         {
-            _timeSinceLastMovement += time.DeltaSeconds;
+            _timeSinceLastMovement += deltaSeconds;
         }
 
-        var nowMoving = _timeSinceLastMovement < MovementWindowSeconds;
-        if (nowMoving != _isMoving)
-        {
-            _isMoving = nowMoving;
-            PlayClip(nowMoving ? _moveClip : _idleClip);
-        }
-
-        // 2. Advance animation time, wrap at duration, recompute palette.
-        _animTime += time.DeltaSeconds * PlayRate;
-        while (_animTime > CurrentClip.Duration)
-        {
-            _animTime -= CurrentClip.Duration;
-        }
-        ComputeMatrixPalette();
+        return _timeSinceLastMovement < MovementWindowSeconds ? AnimState.Move : AnimState.Idle;
     }
 
-    private void PlayClip(Animation clip)
+    private void PlayClip(Animation clip, bool looping)
     {
         CurrentClip = clip;
+        _currentClipLoops = looping;
         _animTime = 0f;
         ComputeMatrixPalette();
     }
@@ -164,6 +229,18 @@ public sealed class SkeletalMeshRendererComponent : Component, ISkinnedRenderabl
         return (idle, move);
     }
 
+    /// <summary>
+    /// Looks for a death-state clip by name. Minion GLBs ship a "death" clip,
+    /// the knight ships "defeated"; a stray "dying" / "die" is accepted too.
+    /// Returns null when nothing matches — the death-state path then freezes
+    /// on the idle pose instead.
+    /// </summary>
+    private static Animation? PickDeathClip(IReadOnlyDictionary<string, Animation> animations) =>
+        FindByNameContains(animations, "death")
+        ?? FindByNameContains(animations, "defeated")
+        ?? FindByNameContains(animations, "dying")
+        ?? FindByNameContains(animations, "die");
+
     private static Animation? FindByNameContains(
         IReadOnlyDictionary<string, Animation> animations,
         string keyword)
@@ -175,6 +252,14 @@ public sealed class SkeletalMeshRendererComponent : Component, ISkinnedRenderabl
                 return clip;
             }
         }
+
         return null;
+    }
+
+    private enum AnimState
+    {
+        Idle,
+        Move,
+        Death,
     }
 }
