@@ -43,8 +43,13 @@ public sealed class NetworkSyncSystem : IEngineSystem
     private readonly Dictionary<uint, Actor> _actorsById = [];
     private uint? _localPlayerNetworkId;
 
-    // Minions read smaller than champions; tune against the map once visible.
-    private const float MinionScale = 2f;
+    // Minion GLBs are authored ~100x larger than the champion models, so scale
+    // down to ~a third of champion height (~1 world unit).
+    private const float MinionScale = 0.01f;
+
+    // The minion meshes face +Z in bind pose (not +X like the champion exports),
+    // so add a quarter turn to the movement-derived yaw to point the nose forward.
+    private const float MinionFacingYaw = MathF.PI / 2f;
 
     public NetworkSyncSystem(
         Scene scene,
@@ -219,6 +224,10 @@ public sealed class NetworkSyncSystem : IEngineSystem
             // Silk's Y-rotation sends (1,0,0) → (cos yaw, 0, -sin yaw) in row-vector
             // form, so yaw = atan2(-forward.Z, forward.X).
             var yaw = MathF.Atan2(-message.ForwardZ, message.ForwardX);
+            if (actor is MinionActor)
+            {
+                yaw += MinionFacingYaw;
+            }
             actor.Transform.Rotation = Quaternion<float>.CreateFromYawPitchRoll(yaw, 0f, 0f);
         }
     }
