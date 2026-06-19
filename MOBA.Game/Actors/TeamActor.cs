@@ -1,5 +1,6 @@
 using MOBA.Engine.Core.Abstractions;
 using MOBA.Game.Components;
+using MOBA.Game.Models;
 using Silk.NET.Maths;
 
 namespace MOBA.Game.Actors;
@@ -19,10 +20,11 @@ namespace MOBA.Game.Actors;
 /// </summary>
 public sealed class TeamActor : Actor
 {
-    public TeamActor(string name, Vector3D<float> spawnAreaCenter)
+    public TeamActor(string name, Vector3D<float> spawnAreaCenter, IReadOnlyList<LaneRoute>? lanes = null)
     {
         Name = name;
         SpawnAreaCenter = spawnAreaCenter;
+        Lanes = lanes ?? [];
         Transform.Position = spawnAreaCenter;
         _ = new TransformComponent(this);
     }
@@ -30,4 +32,7 @@ public sealed class TeamActor : Actor
     public string Name { get; }
 
     public Vector3D<float> SpawnAreaCenter { get; }
+
+    /// <summary>Fixed lane routes the team's minion waves follow to the enemy nexus.</summary>
+    public IReadOnlyList<LaneRoute> Lanes { get; }
 }

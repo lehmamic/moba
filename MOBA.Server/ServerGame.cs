@@ -4,6 +4,7 @@ using MOBA.Engine.Core.Hosting;
 using MOBA.Engine.Networking.Riptide;
 using MOBA.Game;
 using MOBA.Game.Actors;
+using MOBA.Game.Components;
 using MOBA.Game.Factories;
 using MOBA.Game.Scenes;
 using MOBA.Game.Systems;
@@ -45,6 +46,14 @@ public sealed class ServerGame : GameHost
         sceneManager.LoadScene(assets.LoadScene("dimension-rift.json"));
         var navMesh = Game.Scene.GetActor<MapActor>()!.NavMesh;
         Console.WriteLine($"[MOBA.Server] navmesh polys = {navMesh.PolyCount}");
+
+        // Minion waves are game behaviour: one spawner component per team,
+        // ticked by its TeamActor. Replication of the spawned minions is the
+        // ActorReplicationSystem's job (below).
+        foreach (var team in Game.Scene.Actors.OfType<TeamActor>())
+        {
+            _ = new MinionSpawnerComponent(team, Game.Scene, navMesh);
+        }
 
         // Order matters: transport first so subsequent systems can subscribe
         // during their OnInitialize. PlayerConnectionSystem owns the

@@ -102,10 +102,11 @@ public sealed class ClientGame : GameHost
         // Client-side factory list — each factory attaches the render component
         // for its actor type. Dependencies are constructor-injected per factory;
         // no separate Actor subclass per side, no central build-context bag.
+        var monsterFactory = new ClientMonsterActorFactory(_assets);
         var registry = new ActorFactoryRegistry([
             new ClientMapActorFactory(_assets),
             new ClientBuildingActorFactory(_assets),
-            new ClientMonsterActorFactory(_assets),
+            monsterFactory,
             new TeamActorFactory(),
         ]);
         var sceneManager = new SceneManager(Game.Scene, BuildClientGameScene);
@@ -155,7 +156,8 @@ public sealed class ClientGame : GameHost
             markerMaterial,
             knight,
             _cameraSwitcher,
-            navMesh);
+            navMesh,
+            monsterFactory);
 
         // Order matters: transport before sync so MessageReceived events fire
         // after polling. NetworkSyncSystem.OnInitialize sends the Join message

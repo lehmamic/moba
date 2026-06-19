@@ -4,8 +4,10 @@ using MOBA.Engine.Graphics;
 using MOBA.Game.Actors;
 using MOBA.Game.Client.Components;
 using MOBA.Game.Factories;
+using MOBA.Game.Messages;
 using MOBA.Game.Models;
 using MOBA.Game.Scenes;
+using Silk.NET.Maths;
 
 namespace MOBA.Game.Client.Factories;
 
@@ -34,5 +36,29 @@ public sealed class ClientMonsterActorFactory : IActorFactory
             IsVisible = false,
         };
         return actor;
+    }
+
+    /// <summary>
+    /// Assembles a render-ready minion for a network spawn. The server sends only
+    /// the <see cref="MinionType"/> + <see cref="TeamId"/>; the mesh asset key
+    /// convention lives here so "how to build a minion" stays in one place.
+    /// </summary>
+    public Actor CreateNetworkedMinion(MinionType type, TeamId team, Vector3D<float> position)
+    {
+        var minion = new MinionActor(position, team.ToName() ?? "Unknown", type);
+        _ = new SkeletalMeshRendererComponent(minion, _assets.LoadModel(MinionAssetKey(type, team)));
+        return minion;
+    }
+
+    private static string MinionAssetKey(MinionType type, TeamId team)
+    {
+        var role = type switch
+        {
+            MinionType.Caster => "ranged",
+            MinionType.Siege => "siege",
+            _ => "melee",
+        };
+        var side = team == TeamId.Chaos ? "chaos" : "order";
+        return $"monsters/{role}_minion_{side}";
     }
 }

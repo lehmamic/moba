@@ -6,6 +6,7 @@ using MOBA.Engine.Networking;
 using MOBA.Game.Actors;
 using MOBA.Game.Client.Cameras;
 using MOBA.Game.Client.Components;
+using MOBA.Game.Client.Factories;
 using MOBA.Game.Components;
 using MOBA.Game.Messages;
 using MOBA.Game.Models;
@@ -38,8 +39,12 @@ public sealed class NetworkSyncSystem : IEngineSystem
     private readonly Model _playerModel;
     private readonly CameraSwitcher _cameras;
     private readonly NavMesh _navMesh;
+    private readonly ClientMonsterActorFactory _monsterFactory;
     private readonly Dictionary<uint, Actor> _actorsById = [];
     private uint? _localPlayerNetworkId;
+
+    // Minions read smaller than champions; tune against the map once visible.
+    private const float MinionScale = 2f;
 
     public NetworkSyncSystem(
         Scene scene,
@@ -48,7 +53,8 @@ public sealed class NetworkSyncSystem : IEngineSystem
         Material markerMaterial,
         Model playerModel,
         CameraSwitcher cameras,
-        NavMesh navMesh)
+        NavMesh navMesh,
+        ClientMonsterActorFactory monsterFactory)
     {
         _scene = scene;
         _transport = transport;
@@ -57,6 +63,7 @@ public sealed class NetworkSyncSystem : IEngineSystem
         _playerModel = playerModel;
         _cameras = cameras;
         _navMesh = navMesh;
+        _monsterFactory = monsterFactory;
     }
 
     public void OnInitialize()
@@ -134,7 +141,28 @@ public sealed class NetworkSyncSystem : IEngineSystem
             case ActorKind.Marker:
                 SpawnMarker(message);
                 break;
+            case ActorKind.Minion:
+                SpawnMinion(message);
+                break;
         }
+    }
+
+    private void SpawnMinion(ActorSpawnMessage message)
+    {
+        if (_actorsById.ContainsKey(message.Id))
+        {
+            // Idempotent — duplicate spawn from a catch-up replay.
+            return;
+        }
+
+        var minion = _monsterFactory.CreateNetworkedMinion(
+            (MinionType)message.Variant,
+            message.Team,
+            new Vector3D<float>(message.X, message.Y, message.Z));
+        minion.Transform.Scale = Vector3D<float>.One * MinionScale;
+        _ = new NetworkIdentityComponent(minion, message.Id);
+        _scene.AddActor(minion);
+        _actorsById[message.Id] = minion;
     }
 
     private void SpawnPlayer(ActorSpawnMessage message)
@@ -144,6 +172,7 @@ public sealed class NetworkSyncSystem : IEngineSystem
             // Idempotent — duplicate spawn from a catch-up replay.
             return;
         }
+
         // Team is not replicated yet — server-only state today. Future
         // ActorSpawnMessage extension will carry it for HUD colouring etc.
         var player = new PlayerActor(new Vector3D<float>(message.X, message.Y, message.Z), team: "Unknown");
