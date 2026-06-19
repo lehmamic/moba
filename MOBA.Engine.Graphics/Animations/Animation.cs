@@ -92,12 +92,16 @@ public sealed class Animation
 
         // Rest of the hierarchy: each bone's global pose = its local pose at time
         // times its parent's global pose (row-vector convention, same as ADR-002).
+        // A bone may itself be a root (Parent == -1) — glTF skins can carry more
+        // than one root joint (Tripo/Mixamo minion rigs have several) — in which
+        // case its global pose is just its local pose.
         for (var bone = 1; bone < NumBones; bone++)
         {
             var localMat = Tracks[bone].Count > 0
                 ? BoneTransform.Interpolate(Tracks[bone][frame], Tracks[bone][nextFrame], pct).ToMatrix()
                 : Matrix4X4<float>.Identity;
-            outPoses[bone] = localMat * outPoses[skeleton.Bones[bone].Parent];
+            var parent = skeleton.Bones[bone].Parent;
+            outPoses[bone] = parent >= 0 ? localMat * outPoses[parent] : localMat;
         }
     }
 }
