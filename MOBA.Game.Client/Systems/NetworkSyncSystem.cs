@@ -1,6 +1,7 @@
 using MOBA.Engine.Core.Abstractions;
 using MOBA.Engine.Core.Assets;
 using MOBA.Engine.Core.Hosting;
+using MOBA.Engine.Graphics.Abstractions;
 using MOBA.Engine.Graphics.Rendering;
 using MOBA.Engine.Networking;
 using MOBA.Game.Actors;
@@ -39,6 +40,8 @@ public sealed class NetworkSyncSystem : IEngineSystem
     private readonly Model _playerModel;
     private readonly CameraSwitcher _cameras;
     private readonly NavMesh _navMesh;
+    private readonly IMesh _barQuad;
+    private readonly IShader _barShader;
     private readonly ClientMonsterActorFactory _monsterFactory;
     private readonly Dictionary<uint, Actor> _actorsById = [];
     private uint? _localPlayerNetworkId;
@@ -59,6 +62,8 @@ public sealed class NetworkSyncSystem : IEngineSystem
         Model playerModel,
         CameraSwitcher cameras,
         NavMesh navMesh,
+        IMesh barQuad,
+        IShader barShader,
         ClientMonsterActorFactory monsterFactory)
     {
         _scene = scene;
@@ -68,7 +73,8 @@ public sealed class NetworkSyncSystem : IEngineSystem
         _playerModel = playerModel;
         _cameras = cameras;
         _navMesh = navMesh;
-        _monsterFactory = monsterFactory;
+        _barQuad = barQuad;
+        _barShader = barShader;
     }
 
     public void OnInitialize()
@@ -178,9 +184,8 @@ public sealed class NetworkSyncSystem : IEngineSystem
             return;
         }
 
-        // Team is not replicated yet — server-only state today. Future
-        // ActorSpawnMessage extension will carry it for HUD colouring etc.
-        var player = new PlayerActor(new Vector3D<float>(message.X, message.Y, message.Z), team: "Unknown");
+        var team = string.IsNullOrEmpty(message.Team) ? "Unknown" : message.Team;
+        var player = new PlayerActor(new Vector3D<float>(message.X, message.Y, message.Z), team);
         // Player visual scale relative to the dimension-rift map. The knight model
         // is ~2 units tall at source — boost so it reads at MOBA-champion proportions
         // against the textured Sketchfab terrain. Tune until camera/character feel right.
@@ -188,6 +193,15 @@ public sealed class NetworkSyncSystem : IEngineSystem
         _ = new NetworkIdentityComponent(player, message.Id);
         _ = new SkeletalMeshRendererComponent(player, _playerModel);
         _ = new ReplicatedPathComponent(player);
+        var health = player.GetComponent<HealthComponent>()!;
+        _ = new HealthBarVisualComponent(
+            player,
+            health,
+            _scene,
+            _barQuad,
+            _barShader,
+            worldOffset: new Vector3D<float>(0f, 3f, 0f),
+            sizeWorldUnits: new Vector2D<float>(2f, 0.25f));
         if (_localPlayerNetworkId == message.Id)
         {
             _ = new LocalPlayerInputComponent(player, _cameras, _transport, _navMesh);

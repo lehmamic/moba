@@ -16,6 +16,7 @@ namespace MOBA.Game.Client;
 public static class AssetManagerExtensions
 {
     private const string CubeKey = "cube";
+    private const string QuadKey = "quad";
     private const string GroundPrefix = "ground/";
     private const string SpherePrefix = "sphere/";
 
@@ -25,6 +26,10 @@ public static class AssetManagerExtensions
             if (key == CubeKey)
             {
                 return CubeMesh.CreateUnitCube(backend);
+            }
+            if (key == QuadKey)
+            {
+                return QuadMesh.Create(backend);
             }
             if (key.StartsWith(GroundPrefix, StringComparison.Ordinal))
             {
@@ -55,6 +60,9 @@ public static class AssetManagerExtensions
 
     public static IMesh LoadCubeMesh(this AssetManager assets) =>
         assets.Cache<string, IMesh>().GetOrLoad(CubeKey);
+
+    public static IMesh LoadQuadMesh(this AssetManager assets) =>
+        assets.Cache<string, IMesh>().GetOrLoad(QuadKey);
 
     public static IMesh LoadGroundMesh(this AssetManager assets, float width, float length, float worldUnitsPerTile)
     {

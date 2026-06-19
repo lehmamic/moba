@@ -19,7 +19,20 @@ public sealed class BuildingActor : Actor
         Transform.Rotation = definition.Rotation;
         Transform.Scale = definition.Scale;
         _ = new TransformComponent(this);
+        _ = new HealthComponent(this, MaxHealthByType(definition.Type));
+        if (definition.Team is not null)
+        {
+            _ = new TeamComponent(this, definition.Team);
+        }
     }
 
     public Building Definition { get; }
+
+    private static float MaxHealthByType(string type) => type switch
+    {
+        "Nexus" => 5500f,
+        "Inhibitor" => 4000f,
+        "Tower" => 3000f,
+        _ => 1000f,
+    };
 }

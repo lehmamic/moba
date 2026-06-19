@@ -86,6 +86,9 @@ internal sealed class OpenGLShader : IShader
     public void SetUniform(string name, Vector3D<float> value) =>
         _gl.Uniform3(GetLocation(name), value.X, value.Y, value.Z);
 
+    public void SetUniform(string name, Vector2D<float> value) =>
+        _gl.Uniform2(GetLocation(name), value.X, value.Y);
+
     public void SetUniform(string name, ReadOnlySpan<Matrix4X4<float>> values)
     {
         // Same row-vector → GLSL column-vector trick as the single-matrix overload

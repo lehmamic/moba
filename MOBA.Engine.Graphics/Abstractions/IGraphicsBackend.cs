@@ -56,5 +56,32 @@ public interface IGraphicsBackend : IDisposable
         Matrix4X4<float> model,
         MatrixPalette palette);
 
+    /// <summary>
+    /// Begin a billboard pass. Binds the shader, uploads viewProjection plus
+    /// the world-space camera right / up vectors the vertex shader needs to
+    /// rotate the unit quad into the camera plane. Depth writes are disabled
+    /// for the duration of the pass so HP bars draw on top of geometry.
+    /// </summary>
+    void BeginBillboardPass(
+        IShader shader,
+        Matrix4X4<float> viewProjection,
+        Vector3D<float> cameraRight,
+        Vector3D<float> cameraUp);
+
+    /// <summary>
+    /// Draw one billboard inside the currently-bound billboard pass. The mesh
+    /// is the shared unit quad; size, fill colours and outline are uploaded
+    /// as per-draw uniforms.
+    /// </summary>
+    void DrawBillboardInPass(
+        IMesh quad,
+        Matrix4X4<float> model,
+        Vector2D<float> sizeWorldUnits,
+        float fillRatio,
+        Vector3D<float> fillColor,
+        Vector3D<float> backgroundColor,
+        Vector3D<float> outlineColor,
+        float outlineWidthFraction);
+
     void EndFrame();
 }

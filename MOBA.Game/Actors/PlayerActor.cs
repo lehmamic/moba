@@ -25,7 +25,15 @@ public sealed class PlayerActor : Actor
         Team = team;
         Transform.Position = spawnPosition;
         _ = new TransformComponent(this);
+        _ = new HealthComponent(this, MaxHealth);
+        if (!string.IsNullOrEmpty(team) && team != "Unknown")
+        {
+            _ = new TeamComponent(this, team);
+        }
     }
 
     public string Team { get; }
+
+    /// <summary>Champion base HP — round MOBA-scale number; tune once combat lands.</summary>
+    public const float MaxHealth = 580f;
 }

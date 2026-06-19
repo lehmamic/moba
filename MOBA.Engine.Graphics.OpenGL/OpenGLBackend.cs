@@ -95,8 +95,50 @@ public sealed class OpenGLBackend : IGraphicsBackend
         ((OpenGLSkinnedMesh)mesh).Draw();
     }
 
+    public void BeginBillboardPass(
+        IShader shader,
+        Matrix4X4<float> viewProjection,
+        Vector3D<float> cameraRight,
+        Vector3D<float> cameraUp)
+    {
+        var glShader = (OpenGLShader)shader;
+        glShader.Use();
+        glShader.SetUniform("u_viewProjection", viewProjection);
+        glShader.SetUniform("u_cameraRight", cameraRight);
+        glShader.SetUniform("u_cameraUp", cameraUp);
+        // HP bars should not be hidden by terrain or buildings between actor
+        // and camera. Disable depth test for the pass; restored in EndFrame.
+        _gl.Disable(EnableCap.DepthTest);
+
+        _passShader = glShader;
+        _passViewProjection = viewProjection;
+    }
+
+    public void DrawBillboardInPass(
+        IMesh quad,
+        Matrix4X4<float> model,
+        Vector2D<float> sizeWorldUnits,
+        float fillRatio,
+        Vector3D<float> fillColor,
+        Vector3D<float> backgroundColor,
+        Vector3D<float> outlineColor,
+        float outlineWidthFraction)
+    {
+        var shader = RequirePassShader();
+        shader.SetUniform("u_model", model);
+        shader.SetUniform("u_size", sizeWorldUnits);
+        shader.SetUniform("u_fillRatio", fillRatio);
+        shader.SetUniform("u_fillColor", fillColor);
+        shader.SetUniform("u_bgColor", backgroundColor);
+        shader.SetUniform("u_outlineColor", outlineColor);
+        shader.SetUniform("u_outlineWidth", outlineWidthFraction);
+        ((OpenGLMesh)quad).Draw();
+    }
+
     public void EndFrame()
     {
+        // Restore depth test in case a billboard pass was the last thing drawn.
+        _gl.Enable(EnableCap.DepthTest);
         // Swap-chain is handled by the windowing layer (Silk.NET.Windowing).
         // For Vulkan this will be command-buffer submission.
     }

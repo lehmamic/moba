@@ -99,13 +99,17 @@ public sealed class ClientGame : GameHost
         // scene-authored, so they stay client-resolved here rather than in the JSON.
         var knight = _assets.LoadModel("models/knight-garen");
 
+        // Shared HP-bar resources — one unit quad + one shader for every billboard.
+        var barQuad = _assets.LoadQuadMesh();
+        var barShader = _assets.LoadShader("bar");
+
         // Client-side factory list — each factory attaches the render component
         // for its actor type. Dependencies are constructor-injected per factory;
         // no separate Actor subclass per side, no central build-context bag.
         var monsterFactory = new ClientMonsterActorFactory(_assets);
         var registry = new ActorFactoryRegistry([
             new ClientMapActorFactory(_assets),
-            new ClientBuildingActorFactory(_assets),
+            new ClientBuildingActorFactory(_assets, barQuad, barShader, Game.Scene),
             monsterFactory,
             new TeamActorFactory(),
         ]);
@@ -157,6 +161,8 @@ public sealed class ClientGame : GameHost
             knight,
             _cameraSwitcher,
             navMesh,
+            barQuad,
+            barShader,
             monsterFactory);
 
         // Order matters: transport before sync so MessageReceived events fire

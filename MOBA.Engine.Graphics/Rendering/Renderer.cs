@@ -1,6 +1,7 @@
 using MOBA.Engine.Core.Abstractions;
 using MOBA.Engine.Core.Hosting;
 using MOBA.Engine.Graphics.Abstractions;
+using Silk.NET.Maths;
 
 namespace MOBA.Engine.Graphics.Rendering;
 
@@ -95,6 +96,46 @@ public sealed class Renderer
             }
         }
 
+        // Pass 3: billboards (camera-facing quads — HP bars today). The shader
+        // builds the camera-aligned quad from a unit XY mesh + the camera right
+        // / up uploaded once for the pass. Depth writes are disabled by the
+        // backend so the bars draw on top of the world.
+        var forward = Vector3D.Normalize(camera.Target - camera.Position);
+        var cameraRight = Vector3D.Normalize(Vector3D.Cross(forward, camera.Up));
+        var cameraUp = Vector3D.Cross(cameraRight, forward);
+        currentShader = null;
+        foreach (var actor in scene.Actors)
+        {
+            foreach (var component in actor.Components)
+            {
+                if (component is not IBillboardRenderable billboard || !billboard.IsVisible)
+                {
+                    continue;
+                }
+                if (billboard.Shader != currentShader)
+                {
+                    _backend.BeginBillboardPass(billboard.Shader, viewProjection, cameraRight, cameraUp);
+                    currentShader = billboard.Shader;
+                }
+                var worldTranslation = ExtractTranslation(actor.Transform.World);
+                var model = Matrix4X4.CreateTranslation(worldTranslation + billboard.WorldOffset);
+                _backend.DrawBillboardInPass(
+                    billboard.Mesh,
+                    model,
+                    billboard.SizeWorldUnits,
+                    billboard.FillRatio,
+                    billboard.FillColor,
+                    billboard.BackgroundColor,
+                    billboard.OutlineColor,
+                    billboard.OutlineWidthFraction);
+            }
+        }
+
         _backend.EndFrame();
     }
+
+    /// <summary>
+    /// Row-vector convention: translation lives in the bottom row (M41..M43).
+    /// </summary>
+    private static Vector3D<float> ExtractTranslation(Matrix4X4<float> m) => new(m.M41, m.M42, m.M43);
 }
