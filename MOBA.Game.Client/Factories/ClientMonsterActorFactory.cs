@@ -1,8 +1,10 @@
 using MOBA.Engine.Core.Abstractions;
 using MOBA.Engine.Core.Assets;
 using MOBA.Engine.Graphics;
+using MOBA.Engine.Graphics.Abstractions;
 using MOBA.Game.Actors;
 using MOBA.Game.Client.Components;
+using MOBA.Game.Components;
 using MOBA.Game.Factories;
 using MOBA.Game.Messages;
 using MOBA.Game.Models;
@@ -22,8 +24,17 @@ namespace MOBA.Game.Client.Factories;
 public sealed class ClientMonsterActorFactory : IActorFactory
 {
     private readonly AssetManager _assets;
+    private readonly IMesh _barQuad;
+    private readonly IShader _barShader;
+    private readonly Scene _scene;
 
-    public ClientMonsterActorFactory(AssetManager assets) => _assets = assets;
+    public ClientMonsterActorFactory(AssetManager assets, IMesh barQuad, IShader barShader, Scene scene)
+    {
+        _assets = assets;
+        _barQuad = barQuad;
+        _barShader = barShader;
+        _scene = scene;
+    }
 
     public string TypeName => "Monster";
 
@@ -47,6 +58,15 @@ public sealed class ClientMonsterActorFactory : IActorFactory
     {
         var minion = new MinionActor(position, team.ToName() ?? "Unknown", type);
         _ = new SkeletalMeshRendererComponent(minion, _assets.LoadModel(MinionAssetKey(type, team)));
+        var health = minion.GetComponent<HealthComponent>()!;
+        _ = new HealthBarVisualComponent(
+            minion,
+            health,
+            _scene,
+            _barQuad,
+            _barShader,
+            worldOffset: new Vector3D<float>(0f, 1.5f, 0f),
+            sizeWorldUnits: new Vector2D<float>(1.4f, 0.18f));
         return minion;
     }
 

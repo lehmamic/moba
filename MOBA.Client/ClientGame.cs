@@ -106,7 +106,7 @@ public sealed class ClientGame : GameHost
         // Client-side factory list — each factory attaches the render component
         // for its actor type. Dependencies are constructor-injected per factory;
         // no separate Actor subclass per side, no central build-context bag.
-        var monsterFactory = new ClientMonsterActorFactory(_assets);
+        var monsterFactory = new ClientMonsterActorFactory(_assets, barQuad, barShader, Game.Scene);
         var registry = new ActorFactoryRegistry([
             new ClientMapActorFactory(_assets),
             new ClientBuildingActorFactory(_assets, barQuad, barShader, Game.Scene),

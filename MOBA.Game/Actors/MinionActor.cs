@@ -20,9 +20,22 @@ public sealed class MinionActor : Actor
         Type = type;
         Transform.Position = position;
         _ = new TransformComponent(this);
+        _ = new HealthComponent(this, MaxHealthByType(type));
+        if (!string.IsNullOrEmpty(team) && team != "Unknown")
+        {
+            _ = new TeamComponent(this, team);
+        }
     }
 
     public string Team { get; }
 
     public MinionType Type { get; }
+
+    /// <summary>Per-role minion HP — siege is the durable one, melee the bread-and-butter, caster the squishy ranged.</summary>
+    private static float MaxHealthByType(MinionType type) => type switch
+    {
+        MinionType.Siege => 900f,
+        MinionType.Caster => 300f,
+        _ => 475f,
+    };
 }
