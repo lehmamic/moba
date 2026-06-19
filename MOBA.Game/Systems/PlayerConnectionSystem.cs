@@ -117,7 +117,7 @@ public sealed class PlayerConnectionSystem : IEngineSystem
             spawnPosition.X,
             spawnPosition.Y,
             spawnPosition.Z,
-            actor.Team);
+            TeamIds.FromName(actor.Team));
         _transport.SendToAll(NetChannel.Reliable, spawn.Serialize());
 
         // Catch-up: send the joiner a spawn message for every player already
@@ -130,7 +130,7 @@ public sealed class PlayerConnectionSystem : IEngineSystem
             }
             var otherId = otherActor.GetComponent<NetworkIdentityComponent>()!.Id;
             var pos = otherActor.Transform.Position;
-            var catchUp = new ActorSpawnMessage(otherId, ActorKind.Player, pos.X, pos.Y, pos.Z, otherActor.Team);
+            var catchUp = new ActorSpawnMessage(otherId, ActorKind.Player, pos.X, pos.Y, pos.Z, TeamIds.FromName(otherActor.Team));
             _transport.SendTo(sender, NetChannel.Reliable, catchUp.Serialize());
         }
 

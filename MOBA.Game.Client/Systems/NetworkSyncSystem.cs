@@ -75,6 +75,7 @@ public sealed class NetworkSyncSystem : IEngineSystem
         _navMesh = navMesh;
         _barQuad = barQuad;
         _barShader = barShader;
+        _monsterFactory = monsterFactory;
     }
 
     public void OnInitialize()
@@ -184,7 +185,7 @@ public sealed class NetworkSyncSystem : IEngineSystem
             return;
         }
 
-        var team = string.IsNullOrEmpty(message.Team) ? "Unknown" : message.Team;
+        var team = message.Team.ToName() ?? "Unknown";
         var player = new PlayerActor(new Vector3D<float>(message.X, message.Y, message.Z), team);
         // Player visual scale relative to the dimension-rift map. The knight model
         // is ~2 units tall at source — boost so it reads at MOBA-champion proportions

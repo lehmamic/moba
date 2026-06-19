@@ -154,7 +154,7 @@ public sealed class MovementSystem : IEngineSystem, IPostUpdateSystem
         _scene.AddActor(marker);
         moveTarget.MarkerId = markerId;
 
-        var spawn = new ActorSpawnMessage(markerId, ActorKind.Marker, markerPosition.X, markerPosition.Y, markerPosition.Z, string.Empty);
+        var spawn = new ActorSpawnMessage(markerId, ActorKind.Marker, markerPosition.X, markerPosition.Y, markerPosition.Z, TeamId.None);
         _transport.SendToAll(NetChannel.Reliable, spawn.Serialize());
     }
 
