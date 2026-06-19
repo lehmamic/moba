@@ -3,17 +3,19 @@ using MOBA.Engine.Core.Input;
 namespace MOBA.Engine.Core.Abstractions;
 
 /// <summary>
-/// Per-match actor collection with a deferred-add policy: actors added while
-/// <see cref="Update"/> is iterating land in a pending list and join the live
-/// set after the frame, so an actor's update can spawn another actor without
-/// the new one being ticked in the same frame (and without mutating the list
-/// mid-iteration). Madhav, <i>Game Programming in C++</i>, Ch. 2:
-/// <c>mUpdatingActors</c> guard around <c>mActors</c> + <c>mPendingActors</c>.
+/// Per-match actor collection with a deferred-mutation policy: actors added
+/// or removed while <see cref="Update"/> is iterating land in pending lists
+/// and are flushed after the frame, so an actor's update can spawn or
+/// despawn another actor without the change taking effect mid-iteration.
+/// Madhav, <i>Game Programming in C++</i>, Ch. 2: <c>mUpdatingActors</c>
+/// guard around <c>mActors</c> + <c>mPendingActors</c>; the removal side is
+/// the same trick.
 /// </summary>
 public class Scene
 {
     private readonly List<Actor> _actors = [];
     private readonly List<Actor> _pendingActors = [];
+    private readonly List<Actor> _pendingRemovals = [];
     private bool _updating;
 
     public IReadOnlyList<Actor> Actors => _actors;
@@ -62,27 +64,47 @@ public class Scene
     /// <summary>
     /// Removes <paramref name="actor"/> and every actor in its subtree. Calls
     /// <see cref="Actor.OnEnd"/> once at the root, which cascades through
-    /// children (see <see cref="Actor.OnEnd"/>).
+    /// children (see <see cref="Actor.OnEnd"/>). When called from inside
+    /// <see cref="Update"/> (e.g. a <c>DespawnOnDeathComponent</c> tick), the
+    /// actor is queued and the real removal happens after the iteration
+    /// finishes — so a component can safely ask the scene to drop its owner
+    /// without invalidating the in-flight foreach.
     /// </summary>
     public bool RemoveActor(Actor actor)
+    {
+        if (_updating)
+        {
+            _pendingRemovals.Add(actor);
+            return true;
+        }
+
+        return RemoveActorImmediate(actor);
+    }
+
+    private bool RemoveActorImmediate(Actor actor)
     {
         // Remove children from the flat list first, then the root — keeps the
         // invariant that any actor visible to the renderer always has its
         // parent visible too (no orphaned subtree mid-removal).
         foreach (var child in actor.Children.ToArray())
         {
-            RemoveActor(child);
+            RemoveActorImmediate(child);
         }
+
         if (_actors.Remove(actor))
         {
             actor.OnEnd();
+
             return true;
         }
+
         if (_pendingActors.Remove(actor))
         {
             actor.OnEnd();
+
             return true;
         }
+
         return false;
     }
 
@@ -119,6 +141,18 @@ public class Scene
             _updating = false;
         }
 
+        // Apply removals first so a tick that despawns one actor and spawns
+        // another doesn't leak the despawn into the next tick — the new
+        // pending actor joins the live set on the same flush.
+        if (_pendingRemovals.Count > 0)
+        {
+            foreach (var a in _pendingRemovals)
+            {
+                RemoveActorImmediate(a);
+            }
+            _pendingRemovals.Clear();
+        }
+
         if (_pendingActors.Count > 0)
         {
             _actors.AddRange(_pendingActors);
@@ -146,5 +180,6 @@ public class Scene
         }
         _actors.Clear();
         _pendingActors.Clear();
+        _pendingRemovals.Clear();
     }
 }
