@@ -30,4 +30,5 @@ public enum ActorKind : byte
     Cube = 1,
     Marker = 2,
     Player = 3,
+    Minion = 4,
 }

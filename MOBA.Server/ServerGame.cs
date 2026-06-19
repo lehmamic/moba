@@ -54,6 +54,10 @@ public sealed class ServerGame : GameHost
         AddSystem(transport);
         var connections = new PlayerConnectionSystem(Game.Scene, transport);
         AddSystem(connections);
+        // Generic replication runs before movement broadcasting so a newly
+        // spawned descriptor actor is announced (and gets its network id) in the
+        // same post-update tick its position first goes out.
+        AddSystem(new ActorReplicationSystem(Game.Scene, transport));
         AddSystem(new MovementSystem(Game.Scene, transport, connections, navMesh));
     }
 
