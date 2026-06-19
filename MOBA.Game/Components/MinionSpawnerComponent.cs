@@ -83,6 +83,7 @@ public sealed class MinionSpawnerComponent : Component
         _ = new AggroComponent(minion, AggroProfiles.ForMinion(type), _scene);
         _ = new AttackComponent(minion, AttackProfiles.ForMinion(type), _navMesh);
         var move = new MoveTargetComponent(minion, MinionSpeed);
+        _ = new DespawnOnDeathComponent(minion, _scene);
         _ = new ReplicatedSpawnComponent(minion, ActorKind.Minion, TeamIds.FromName(_team.Name), (byte)type);
 
         // Walk the navmesh corridor, then a navmesh-snapped fan point around the
