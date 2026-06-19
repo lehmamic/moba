@@ -22,13 +22,10 @@ public enum MessageType : byte
     /// display) — clients do not pathfind themselves.
     /// </summary>
     MovePath = 7,
-}
-
-/// <summary>Distinguishes spawn-message payloads on the wire.</summary>
-public enum ActorKind : byte
-{
-    Cube = 1,
-    Marker = 2,
-    Player = 3,
-    Minion = 4,
+    /// <summary>
+    /// Server → Client: "this networked actor's HP is now (Current, Max)."
+    /// Broadcast only on change (HealthComponent.Version dirty) by
+    /// <c>ActorReplicationSystem.BroadcastHealthChanges</c>.
+    /// </summary>
+    ActorHealth = 8,
 }

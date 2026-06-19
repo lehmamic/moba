@@ -119,6 +119,9 @@ public sealed class NetworkSyncSystem : IEngineSystem
             case MessageType.MovePath:
                 HandleMovePath(MovePathMessage.ReadPayload(reader));
                 break;
+            case MessageType.ActorHealth:
+                HandleHealthUpdate(ActorHealthMessage.ReadPayload(reader));
+                break;
             case MessageType.MoveCommand:
             case MessageType.Join:
                 // Client → server messages — ignore if ever echoed back.
@@ -253,6 +256,15 @@ public sealed class NetworkSyncSystem : IEngineSystem
         {
             _scene.RemoveActor(actor);
             _actorsById.Remove(message.Id);
+        }
+    }
+
+    private void HandleHealthUpdate(ActorHealthMessage message)
+    {
+        if (_actorsById.TryGetValue(message.Id, out var actor)
+            && actor.GetComponent<HealthComponent>() is { } health)
+        {
+            health.SetCurrent(message.Current);
         }
     }
 }

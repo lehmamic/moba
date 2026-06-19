@@ -30,6 +30,7 @@ public sealed class ActorReplicationSystem : IEngineSystem, IPostUpdateSystem
     private readonly Scene _scene;
     private readonly IServerNetTransport _transport;
     private readonly Dictionary<uint, Actor> _live = [];
+    private readonly Dictionary<uint, uint> _lastSentHealthVersion = [];
     private uint _nextId = FirstReplicatedId;
 
     public ActorReplicationSystem(Scene scene, IServerNetTransport transport)
@@ -48,6 +49,7 @@ public sealed class ActorReplicationSystem : IEngineSystem, IPostUpdateSystem
     {
         AnnounceNewActors();
         DespawnRemovedActors();
+        BroadcastHealthChanges();
     }
 
     public void OnShutdown() => _transport.MessageReceived -= OnMessageReceived;
@@ -85,7 +87,37 @@ public sealed class ActorReplicationSystem : IEngineSystem, IPostUpdateSystem
         foreach (var id in gone)
         {
             _live.Remove(id);
+            _lastSentHealthVersion.Remove(id);
             _transport.SendToAll(NetChannel.Reliable, new ActorDespawnMessage(id).Serialize());
+        }
+    }
+
+    /// <summary>
+    /// Walks every networked actor with a <see cref="HealthComponent"/> and
+    /// emits an <see cref="ActorHealthMessage"/> when its monotonic Version
+    /// counter has advanced since the last broadcast. Idle matches generate
+    /// zero traffic on this channel — only actual mutations move the
+    /// counter.
+    /// </summary>
+    private void BroadcastHealthChanges()
+    {
+        foreach (var actor in _scene.Actors)
+        {
+            if (actor.GetComponent<NetworkIdentityComponent>() is not { } netId
+                || actor.GetComponent<HealthComponent>() is not { } health)
+            {
+                continue;
+            }
+
+            if (_lastSentHealthVersion.GetValueOrDefault(netId.Id) == health.Version)
+            {
+                continue;
+            }
+
+            _transport.SendToAll(
+                NetChannel.Reliable,
+                new ActorHealthMessage(netId.Id, health.Current, health.Max).Serialize());
+            _lastSentHealthVersion[netId.Id] = health.Version;
         }
     }
 
@@ -93,17 +125,28 @@ public sealed class ActorReplicationSystem : IEngineSystem, IPostUpdateSystem
     {
         using var stream = new MemoryStream(payload.ToArray());
         using var reader = new BinaryReader(stream);
+
         if ((MessageType)reader.ReadByte() != MessageType.Join)
         {
             return;
         }
+
         // Catch-up: replay every live descriptor actor to the joiner so a client
-        // joining mid-match sees the minions already on the field.
+        // joining mid-match sees the minions already on the field, plus its
+        // current HP if any damage already landed.
         foreach (var (id, actor) in _live)
         {
             if (actor.GetComponent<ReplicatedSpawnComponent>() is { } descriptor)
             {
                 _transport.SendTo(sender, NetChannel.Reliable, SpawnFor(id, actor, descriptor).Serialize());
+            }
+
+            if (actor.GetComponent<HealthComponent>() is { Version: > 0 } health)
+            {
+                _transport.SendTo(
+                    sender,
+                    NetChannel.Reliable,
+                    new ActorHealthMessage(id, health.Current, health.Max).Serialize());
             }
         }
     }
