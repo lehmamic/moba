@@ -5,6 +5,7 @@ using MOBA.Engine.Core.Assets;
 using MOBA.Engine.Core.Hosting;
 using MOBA.Engine.Graphics;
 using MOBA.Engine.Graphics.OpenGL;
+using MOBA.Editor.Passes;
 using MOBA.Engine.Graphics.Rendering;
 using MOBA.Engine.Graphics.Rendering.Passes;
 using MOBA.Game;
@@ -101,11 +102,17 @@ public sealed class SceneViewport : OpenGlControlBase
 
         _camera = new EditorCamera(this);
 
-        // Game pipeline today — editor-only passes (grid / lanes / spawns)
-        // land in the next commit on top of this composition.
+        // Editor pipeline: same three game passes (StaticMesh / Skinned /
+        // Billboard) plus the editor-only authoring overlays.
+        var pathShader = _assets.LoadShader("path");
+        var phongShader = _assets.LoadShader("phong_textured");
+        var markerMaterial = new Material(phongShader, _assets.LoadTexture("marker_magenta.png"));
         var pipeline = new RenderPipeline([
             new StaticMeshPass(),
+            new GridOverlayPass(GridOverlayPass.Build(_backend), pathShader),
             new SkinnedMeshPass(),
+            new LaneOverlayPass(pathShader),
+            new SpawnPointMarkerPass(_assets.LoadSphereMesh(radius: 1f), markerMaterial),
             new BillboardPass(),
         ]);
         _renderer = new Renderer(_backend, pipeline);
