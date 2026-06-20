@@ -17,6 +17,11 @@ public sealed class LaneOverlayPass : IRenderPass
 {
     private const float LiftAboveGround = 0.1f;
 
+    // The path shader's u_color uniform persists in the GL program across
+    // BeginPass calls — set it explicitly so we don't inherit whatever the
+    // last pass (grid) wrote.
+    private static readonly Vector3D<float> LaneColor = new(0.2f, 1.0f, 0.9f);
+
     private readonly Material _material;
     private IMesh? _mesh;
 
@@ -36,6 +41,7 @@ public sealed class LaneOverlayPass : IRenderPass
             context.Camera.ViewProjection,
             context.Camera.Position,
             context.Light);
+        _material.Shader.SetUniform("u_color", LaneColor);
         backend.DrawMeshInPass(_mesh, _material, Matrix4X4<float>.Identity);
     }
 

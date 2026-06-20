@@ -6,6 +6,14 @@ namespace MOBA.Engine.Graphics.Abstractions;
 
 public interface IGraphicsBackend : IDisposable
 {
+    /// <summary>
+    /// Pixel size of the currently bound framebuffer, last value passed to
+    /// <see cref="Resize"/>. Passes that need to position screen-space overlays
+    /// (corner gizmos, on-screen text) read this instead of threading the
+    /// window size through every <c>RenderFrameContext</c>.
+    /// </summary>
+    Vector2D<int> FramebufferSize { get; }
+
     IMesh CreateMesh(ReadOnlySpan<Vertex> vertices, ReadOnlySpan<uint> indices);
 
     /// <summary>
@@ -55,6 +63,23 @@ public interface IGraphicsBackend : IDisposable
         Material material,
         Matrix4X4<float> model,
         MatrixPalette palette);
+
+    /// <summary>
+    /// Begin a screen-space overlay pass. Confines drawing to the given
+    /// viewport rectangle (pixel coordinates, origin top-left from the
+    /// caller's perspective) and disables depth testing so the overlay always
+    /// paints on top of whatever the main scene rendered into that region.
+    /// Typical use: a corner camera gizmo, a minimap, or a debug HUD. The
+    /// usual <see cref="DrawMeshInPass"/> path applies. Viewport + depth state
+    /// are restored at <see cref="EndFrame"/>.
+    /// </summary>
+    void BeginOverlayPass(
+        IShader shader,
+        Matrix4X4<float> viewProjection,
+        int x,
+        int y,
+        int width,
+        int height);
 
     /// <summary>
     /// Begin a billboard pass. Binds the shader, uploads viewProjection plus

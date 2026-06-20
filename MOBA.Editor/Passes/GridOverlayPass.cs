@@ -8,17 +8,29 @@ namespace MOBA.Editor.Passes;
 /// Editor-only render pass. Draws a unit-spaced grid on the Y = 0 ground
 /// plane so the author can eyeball world distances while flying around.
 /// The grid mesh is built once via <see cref="Build"/> and re-used every
-/// frame — the grid is static, no allocations per tick.
+/// frame — the grid is static, no allocations per tick. Colour is pushed
+/// into the line shader's <c>u_color</c> uniform each frame so the same
+/// shared <c>path</c> shader can drive grid + lane overlays without
+/// stepping on each other's colour state.
 /// </summary>
 public sealed class GridOverlayPass : IRenderPass
 {
+    /// <summary>
+    /// Neutral mid-grey that mirrors Unity's default Scene-View grid — bright
+    /// enough to read against grass, dark enough not to fight the actual
+    /// geometry for attention.
+    /// </summary>
+    public static readonly Vector3D<float> UnityGrey = new(0.35f, 0.35f, 0.35f);
+
     private readonly IMesh _mesh;
     private readonly Material _material;
+    private readonly Vector3D<float> _color;
 
-    public GridOverlayPass(IMesh mesh, IShader shader)
+    public GridOverlayPass(IMesh mesh, IShader shader, Vector3D<float>? color = null)
     {
         _mesh = mesh;
         _material = new Material(shader);
+        _color = color ?? UnityGrey;
     }
 
     public void Execute(RenderFrameContext context)
@@ -29,6 +41,7 @@ public sealed class GridOverlayPass : IRenderPass
             context.Camera.ViewProjection,
             context.Camera.Position,
             context.Light);
+        _material.Shader.SetUniform("u_color", _color);
         backend.DrawMeshInPass(_mesh, _material, Matrix4X4<float>.Identity);
     }
 

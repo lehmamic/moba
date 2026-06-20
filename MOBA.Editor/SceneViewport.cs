@@ -132,6 +132,7 @@ public sealed class SceneViewport : OpenGlControlBase
             new LaneOverlayPass(pathShader),
             new SpawnPointMarkerPass(_assets.LoadSphereMesh(radius: 1f), markerMaterial),
             new BillboardPass(),
+            new AxisGizmoPass(pathShader),
         ]);
         _renderer = new Renderer(_backend, pipeline);
     }

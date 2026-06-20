@@ -14,6 +14,8 @@ public sealed class OpenGLBackend : IGraphicsBackend
     private OpenGLShader? _passShader;
     private Matrix4X4<float> _passViewProjection;
 
+    public Vector2D<int> FramebufferSize { get; private set; } = new(1, 1);
+
     public OpenGLBackend(GL gl)
     {
         _gl = gl;
@@ -39,8 +41,11 @@ public sealed class OpenGLBackend : IGraphicsBackend
     public IShader CreateShader(string vertexSource, string fragmentSource) =>
         new OpenGLShader(_gl, vertexSource, fragmentSource);
 
-    public void Resize(int framebufferWidth, int framebufferHeight) =>
+    public void Resize(int framebufferWidth, int framebufferHeight)
+    {
+        FramebufferSize = new Vector2D<int>(framebufferWidth, framebufferHeight);
         _gl.Viewport(0, 0, (uint)framebufferWidth, (uint)framebufferHeight);
+    }
 
     public void BeginFrame(float clearR, float clearG, float clearB)
     {
@@ -95,6 +100,28 @@ public sealed class OpenGLBackend : IGraphicsBackend
         ((OpenGLSkinnedMesh)mesh).Draw();
     }
 
+    public void BeginOverlayPass(
+        IShader shader,
+        Matrix4X4<float> viewProjection,
+        int x,
+        int y,
+        int width,
+        int height)
+    {
+        var glShader = (OpenGLShader)shader;
+        glShader.Use();
+        // OpenGL viewport origin is bottom-left; callers think top-left. Flip
+        // y so the same (x, y) input lands in the screen corner the caller
+        // expects.
+        var glY = FramebufferSize.Y - y - height;
+        _gl.Viewport(x, glY, (uint)width, (uint)height);
+        // Overlay always paints on top — depth state restored at EndFrame.
+        _gl.Disable(EnableCap.DepthTest);
+
+        _passShader = glShader;
+        _passViewProjection = viewProjection;
+    }
+
     public void BeginBillboardPass(
         IShader shader,
         Matrix4X4<float> viewProjection,
@@ -137,8 +164,11 @@ public sealed class OpenGLBackend : IGraphicsBackend
 
     public void EndFrame()
     {
-        // Restore depth test in case a billboard pass was the last thing drawn.
+        // Restore depth test in case a billboard / overlay pass was the last thing drawn.
         _gl.Enable(EnableCap.DepthTest);
+        // Restore the full-frame viewport so the next frame's main passes
+        // aren't confined to the last overlay's corner rectangle.
+        _gl.Viewport(0, 0, (uint)FramebufferSize.X, (uint)FramebufferSize.Y);
         // Swap-chain is handled by the windowing layer (Silk.NET.Windowing).
         // For Vulkan this will be command-buffer submission.
     }
