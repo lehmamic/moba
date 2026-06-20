@@ -1,5 +1,6 @@
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:editor="clr-namespace:MOBA.Editor;assembly=MOBA.Editor"
         x:Class="MOBA.Editor.MainWindow"
         Title="MOBA Editor"
         Width="1400"
@@ -14,12 +15,6 @@
                        Margin="16"
                        Foreground="#999" />
         </Border>
-        <Border Background="#2A2A2A">
-            <TextBlock Text="Viewport (next commit)"
-                       HorizontalAlignment="Center"
-                       VerticalAlignment="Center"
-                       Foreground="#666"
-                       FontSize="14" />
-        </Border>
+        <editor:SceneViewport />
     </DockPanel>
 </Window>
