@@ -9,6 +9,7 @@
   <Project Path="MOBA.Game.Client/MOBA.Game.Client.csproj" />
   <Project Path="MOBA.Server/MOBA.Server.csproj" />
   <Project Path="MOBA.Client/MOBA.Client.csproj" />
+  <Project Path="MOBA.Editor/MOBA.Editor.csproj" />
   <Project Path="tests/MOBA.Architecture.Tests/MOBA.Architecture.Tests.csproj" />
   <Project Path="tests/MOBA.Game.Tests/MOBA.Game.Tests.csproj" />
   <Project Path="tests/MOBA.Utilities.Tests/MOBA.Utilities.Tests.csproj" />

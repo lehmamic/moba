@@ -1,0 +1,40 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <OutputType>Exe</OutputType>
+        <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
+        <!--
+          NU1903: Avalonia.Desktop drags in Tmds.DBus.Protocol via the Linux X11
+          backend, which still ships a version flagged by GHSA-xrw6-gwf8-vvr9.
+          The editor only runs on the developer's desktop and the vulnerable code
+          path is the DBus IPC backend; suppress here until a newer Avalonia
+          ships the patched transitive.
+        -->
+        <NoWarn>$(NoWarn);NU1903</NoWarn>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Avalonia" />
+        <PackageReference Include="Avalonia.Desktop" />
+        <PackageReference Include="Avalonia.Themes.Fluent" />
+        <PackageReference Include="Silk.NET.OpenGL" />
+        <PackageReference Include="Silk.NET.Maths" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\MOBA.Utilities\MOBA.Utilities.csproj" />
+        <ProjectReference Include="..\MOBA.Engine.Core\MOBA.Engine.Core.csproj" />
+        <ProjectReference Include="..\MOBA.Engine.Graphics\MOBA.Engine.Graphics.csproj" />
+        <ProjectReference Include="..\MOBA.Engine.Graphics.OpenGL\MOBA.Engine.Graphics.OpenGL.csproj" />
+        <ProjectReference Include="..\MOBA.Game\MOBA.Game.csproj" />
+        <ProjectReference Include="..\MOBA.Game.Client\MOBA.Game.Client.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <None Include="..\assets\**\*.*">
+            <Link>assets\%(RecursiveDir)%(Filename)%(Extension)</Link>
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </None>
+    </ItemGroup>
+
+</Project>
