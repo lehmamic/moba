@@ -1,11 +1,13 @@
 using Avalonia.OpenGL;
 using Avalonia.OpenGL.Controls;
+using MOBA.Editor.Components;
+using MOBA.Editor.Input;
+using MOBA.Editor.Passes;
 using MOBA.Engine.Core.Abstractions;
 using MOBA.Engine.Core.Assets;
 using MOBA.Engine.Core.Hosting;
 using MOBA.Engine.Graphics;
 using MOBA.Engine.Graphics.OpenGL;
-using MOBA.Editor.Passes;
 using MOBA.Engine.Graphics.Rendering;
 using MOBA.Engine.Graphics.Rendering.Passes;
 using MOBA.Game;
@@ -30,6 +32,15 @@ namespace MOBA.Editor;
 /// attaches the server-side gameplay components (<see cref="MinionSpawnerComponent"/>
 /// on each team, <see cref="AggroComponent"/> + <see cref="AttackComponent"/>
 /// on towers / nexus) so play-mode sim ticks alongside the renderer.
+///
+/// <para>
+/// Input is fully engine-side. An <see cref="AvaloniaInputSource"/> maps
+/// Avalonia pointer / key events to the engine's <c>InputState</c>; the
+/// snapshot is fed into <c>Scene.ProcessInput</c> each frame, where the
+/// camera <c>CameraActor</c>'s <see cref="OrbitCameraComponent"/> consumes
+/// it. The viewport itself never touches the camera math — it only resizes
+/// the backend and hands the actor's <see cref="Camera"/> to the renderer.
+/// </para>
 /// </summary>
 [System.Diagnostics.CodeAnalysis.SuppressMessage(
     "Reliability",
@@ -43,7 +54,8 @@ public sealed class SceneViewport : OpenGlControlBase
     private Scene? _scene;
     private SceneManager? _sceneManager;
     private AssetManager? _assets;
-    private EditorCamera? _camera;
+    private CameraActor? _cameraActor;
+    private AvaloniaInputSource? _input;
     private DirectionalLight _light;
     private DateTime _lastTick = DateTime.UtcNow;
     private double _totalSeconds;
@@ -100,9 +112,15 @@ public sealed class SceneViewport : OpenGlControlBase
             SpecularStrength: 0.5f,
             Shininess: 32f);
 
-        _camera = new EditorCamera(this);
+        // Editor camera as an actor + orbit-controller component. The scene's
+        // ProcessInput pipeline drives it; nothing in this viewport touches
+        // the camera transform directly.
+        _cameraActor = new CameraActor();
+        _ = new OrbitCameraComponent(_cameraActor);
+        _scene.AddActor(_cameraActor);
+        _input = new AvaloniaInputSource(this);
 
-        // Editor pipeline: same three game passes (StaticMesh / Skinned /
+        // Editor pipeline: the three game passes (StaticMesh / Skinned /
         // Billboard) plus the editor-only authoring overlays.
         var pathShader = _assets.LoadShader("path");
         var phongShader = _assets.LoadShader("phong_textured");
@@ -120,13 +138,12 @@ public sealed class SceneViewport : OpenGlControlBase
 
     protected override void OnOpenGlRender(GlInterface gl, int fb)
     {
-        if (_gl is null || _backend is null || _renderer is null || _scene is null || _camera is null)
+        if (_gl is null || _backend is null || _renderer is null || _scene is null
+            || _cameraActor is null || _input is null)
         {
             return;
         }
 
-        // Avalonia hands us its FBO every frame; bind it as the draw target
-        // before the backend re-applies viewport / depth / blend state.
         _gl.BindFramebuffer(FramebufferTarget.Framebuffer, (uint)fb);
 
         var width = (int)Bounds.Width;
@@ -137,16 +154,20 @@ public sealed class SceneViewport : OpenGlControlBase
         }
 
         _backend.Resize(width, height);
-        _camera.Camera.AspectRatio = (float)width / height;
+        _cameraActor.Camera.AspectRatio = (float)width / height;
 
         var now = DateTime.UtcNow;
         var dt = (float)Math.Min((now - _lastTick).TotalSeconds, 0.1d);
         _lastTick = now;
         _totalSeconds += dt;
-        _camera.Tick(dt);
 
+        // Engine input flow: snapshot → Scene.ProcessInput → component's
+        // OnProcessInput. Component stashes it for OnUpdate which actually
+        // moves the camera.
+        var snapshot = _input.CaptureSnapshot(new Vector2D<int>(width, height));
+        _scene.ProcessInput(snapshot);
         _scene.Update(new GameTime(dt, _totalSeconds));
-        _renderer.RenderFrame(_scene, _camera.Camera, _light);
+        _renderer.RenderFrame(_scene, _cameraActor.Camera, _light);
 
         RequestNextFrameRendering();
     }
@@ -160,7 +181,8 @@ public sealed class SceneViewport : OpenGlControlBase
         _scene = null;
         _sceneManager = null;
         _assets = null;
-        _camera = null;
+        _cameraActor = null;
+        _input = null;
         _gl = null;
     }
 }

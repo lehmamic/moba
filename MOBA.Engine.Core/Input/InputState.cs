@@ -16,10 +16,21 @@ namespace MOBA.Engine.Core.Input;
 /// <param name="LeftMouseJustPressed">True only on the frame the left button went from up to down.</param>
 /// <param name="RightMouseDown">True while the right button is held.</param>
 /// <param name="RightMouseJustPressed">True only on the frame the right button went from up to down.</param>
+/// <param name="MiddleMouseDown">True while the middle button is held.</param>
+/// <param name="MiddleMouseJustPressed">True only on the frame the middle button went from up to down.</param>
+/// <param name="MouseDelta">Cumulative mouse pixel delta since the previous snapshot — handy for cameras
+/// that want a per-frame drag amount without tracking the previous position themselves.</param>
+/// <param name="WheelDelta">Cumulative wheel notches since the previous snapshot (X horizontal, Y vertical).</param>
+/// <param name="KeysDown">Bitmask of keys held this frame. Adapters map their native keys to <see cref="EngineKeys"/>.</param>
 public readonly record struct InputState(
     Vector2D<float> MousePosition,
     Vector2D<int> FramebufferSize,
     bool LeftMouseDown,
     bool LeftMouseJustPressed,
     bool RightMouseDown,
-    bool RightMouseJustPressed);
+    bool RightMouseJustPressed,
+    bool MiddleMouseDown = false,
+    bool MiddleMouseJustPressed = false,
+    Vector2D<float> MouseDelta = default,
+    Vector2D<float> WheelDelta = default,
+    EngineKeys KeysDown = EngineKeys.None);
