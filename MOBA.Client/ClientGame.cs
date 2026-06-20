@@ -3,6 +3,7 @@ using MOBA.Engine.Core.Hosting;
 using MOBA.Engine.Graphics;
 using MOBA.Engine.Graphics.OpenGL;
 using MOBA.Engine.Graphics.Rendering;
+using MOBA.Engine.Graphics.Rendering.Passes;
 using MOBA.Engine.Networking.Riptide;
 using MOBA.Game;
 using MOBA.Game.Actors;
@@ -71,7 +72,11 @@ public sealed class ClientGame : GameHost
         _backend = new OpenGLBackend(gl);
 
         _input = new InputSystem(_window.CreateInput());
-        _renderer = new Renderer(_backend);
+        _renderer = new Renderer(_backend, new RenderPipeline([
+            new StaticMeshPass(),
+            new SkinnedMeshPass(),
+            new BillboardPass(),
+        ]));
 
         var assetsRoot = AbsolutePath.AppBaseDirectory / "assets";
         var shadersRoot = assetsRoot / "shaders";
