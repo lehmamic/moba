@@ -57,7 +57,7 @@ public sealed class ClientMonsterActorFactory : IActorFactory
     public Actor CreateNetworkedMinion(MinionType type, TeamId team, Vector3D<float> position)
     {
         var minion = new MinionActor(position, team.ToName() ?? "Unknown", type);
-        _ = new SkeletalMeshRendererComponent(minion, _assets.LoadModel(MinionAssetKey(type, team)));
+        _ = new SkeletalMeshRendererComponent(minion, _assets.LoadModel(MinionAssetKey(type, team)), _scene);
         var health = minion.GetComponent<HealthComponent>()!;
         _ = new HealthBarVisualComponent(
             minion,

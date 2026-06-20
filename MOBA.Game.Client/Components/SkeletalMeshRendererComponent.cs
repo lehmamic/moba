@@ -3,7 +3,9 @@ using MOBA.Engine.Core.Hosting;
 using MOBA.Engine.Graphics.Abstractions;
 using MOBA.Engine.Graphics.Animations;
 using MOBA.Engine.Graphics.Rendering;
+using MOBA.Game.Actors;
 using MOBA.Game.Components;
+using MOBA.Game.Models;
 using Silk.NET.Maths;
 
 namespace MOBA.Game.Client.Components;
@@ -44,17 +46,20 @@ public sealed class SkeletalMeshRendererComponent : Component, ISkinnedRenderabl
     private const float MovementWindowSeconds = 0.15f;
 
     private readonly Model _model;
+    private readonly Scene _scene;
     private readonly Animation _idleClip;
     private readonly Animation _moveClip;
     private readonly Animation? _deathClip;
+    private readonly Animation? _attackClip;
     private float _animTime;
     private AnimState _state = AnimState.Idle;
     private bool _currentClipLoops = true;
     private float _timeSinceLastMovement = float.PositiveInfinity;
     private Vector3D<float> _lastPosition;
 
-    public SkeletalMeshRendererComponent(Actor owner, Model model) : base(owner)
+    public SkeletalMeshRendererComponent(Actor owner, Model model, Scene scene) : base(owner)
     {
+        _scene = scene;
         if (model.Skeleton is null)
         {
             throw new ArgumentException("Model has no skeleton — use MeshRendererComponent for static meshes.", nameof(model));
@@ -78,9 +83,11 @@ public sealed class SkeletalMeshRendererComponent : Component, ISkinnedRenderabl
         // Pick idle = longest, locomotion = shortest non-idle. Tripo / Mixamo exports
         // name clips uninformatively (NlaTrack / NlaTrack.001 …); the heuristic
         // also tries explicit name hints first (Mixamo-style "idle" / "run" / "walk").
-        // Death clip is optional — models without one fall back to a frozen idle pose.
+        // Death and attack clips are optional — models without them fall back to
+        // a frozen idle pose (death) or skip the attack state entirely (attack).
         (_idleClip, _moveClip) = PickIdleAndMoveClips(model.Animations);
         _deathClip = PickDeathClip(model.Animations);
+        _attackClip = PickAttackClip(model.Animations);
         CurrentClip = _idleClip;
         _lastPosition = owner.Transform.Position;
         PlayClip(_idleClip, looping: true);
@@ -122,6 +129,9 @@ public sealed class SkeletalMeshRendererComponent : Component, ISkinnedRenderabl
                 case AnimState.Move:
                     PlayClip(_moveClip, looping: true);
                     break;
+                case AnimState.Attack:
+                    PlayClip(_attackClip ?? _idleClip, looping: true);
+                    break;
                 default:
                     PlayClip(_idleClip, looping: true);
                     break;
@@ -152,9 +162,10 @@ public sealed class SkeletalMeshRendererComponent : Component, ISkinnedRenderabl
     /// <summary>
     /// Picks the clip the actor should be playing this tick. Death is sticky
     /// — once entered we never leave it. Otherwise the movement state machine
-    /// produces idle / move based on observed position changes with a small
-    /// hold window so the 30 Hz server snapshot cadence doesn't flicker the
-    /// state every frame between snapshots.
+    /// produces move while the owner is sliding along its path, and falls
+    /// through to attack-or-idle when motion stops: attack fires whenever an
+    /// enemy is within the actor's attack range and the model has an attack
+    /// clip; idle is the no-fight fallback.
     /// </summary>
     private AnimState DesiredState(float deltaSeconds)
     {
@@ -162,7 +173,6 @@ public sealed class SkeletalMeshRendererComponent : Component, ISkinnedRenderabl
         {
             return AnimState.Death;
         }
-
         if (Owner.GetComponent<HealthComponent>() is { Current: <= 0f })
         {
             return AnimState.Death;
@@ -181,8 +191,71 @@ public sealed class SkeletalMeshRendererComponent : Component, ISkinnedRenderabl
             _timeSinceLastMovement += deltaSeconds;
         }
 
-        return _timeSinceLastMovement < MovementWindowSeconds ? AnimState.Move : AnimState.Idle;
+        if (_timeSinceLastMovement < MovementWindowSeconds)
+        {
+            return AnimState.Move;
+        }
+        if (_attackClip is not null && IsEnemyInAttackRange())
+        {
+            return AnimState.Attack;
+        }
+        return AnimState.Idle;
     }
+
+    /// <summary>
+    /// Looks for an alive enemy actor inside the owner's attack range — a
+    /// purely visual proxy for "the server is firing right now," good enough
+    /// for the client's attack-clip selection without a dedicated wire flag.
+    /// Falls back to false on actors whose type has no known attack range
+    /// (e.g. a champion model without an attack clip wouldn't enter the
+    /// state anyway).
+    /// </summary>
+    private bool IsEnemyInAttackRange()
+    {
+        var range = AttackRangeFor(Owner);
+        if (range <= 0f)
+        {
+            return false;
+        }
+        var myTeam = Owner.GetComponent<TeamComponent>()?.Team;
+        if (myTeam is null)
+        {
+            return false;
+        }
+
+        var myPos = Owner.Transform.Position;
+        var rangeSq = range * range;
+        foreach (var actor in _scene.Actors)
+        {
+            if (ReferenceEquals(actor, Owner))
+            {
+                continue;
+            }
+            if (actor.GetComponent<HealthComponent>() is not { Current: > 0f })
+            {
+                continue;
+            }
+            var team = actor.GetComponent<TeamComponent>()?.Team;
+            if (team is null || string.Equals(team, myTeam, StringComparison.Ordinal))
+            {
+                continue;
+            }
+            var dx = actor.Transform.Position.X - myPos.X;
+            var dz = actor.Transform.Position.Z - myPos.Z;
+            if ((dx * dx) + (dz * dz) <= rangeSq)
+            {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private static float AttackRangeFor(Actor actor) => actor switch
+    {
+        MinionActor m => AttackProfiles.ForMinion(m.Type).Range,
+        PlayerActor => AttackProfiles.ForChampion().Range,
+        _ => 0f,
+    };
 
     private void PlayClip(Animation clip, bool looping)
     {
@@ -241,6 +314,18 @@ public sealed class SkeletalMeshRendererComponent : Component, ISkinnedRenderabl
         ?? FindByNameContains(animations, "dying")
         ?? FindByNameContains(animations, "die");
 
+    /// <summary>
+    /// Looks for an attack-state clip by name. Minion GLBs typically ship one
+    /// of "attack" / "punch" / "swing" / "shoot" / "cast"; assets without one
+    /// (the knight today) just never enter the attack state.
+    /// </summary>
+    private static Animation? PickAttackClip(IReadOnlyDictionary<string, Animation> animations) =>
+        FindByNameContains(animations, "attack")
+        ?? FindByNameContains(animations, "punch")
+        ?? FindByNameContains(animations, "swing")
+        ?? FindByNameContains(animations, "shoot")
+        ?? FindByNameContains(animations, "cast");
+
     private static Animation? FindByNameContains(
         IReadOnlyDictionary<string, Animation> animations,
         string keyword)
@@ -260,6 +345,7 @@ public sealed class SkeletalMeshRendererComponent : Component, ISkinnedRenderabl
     {
         Idle,
         Move,
+        Attack,
         Death,
     }
 }

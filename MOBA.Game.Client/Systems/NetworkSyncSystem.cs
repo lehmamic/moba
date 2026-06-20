@@ -195,7 +195,7 @@ public sealed class NetworkSyncSystem : IEngineSystem
         // against the textured Sketchfab terrain. Tune until camera/character feel right.
         player.Transform.Scale = Vector3D<float>.One * 3f;
         _ = new NetworkIdentityComponent(player, message.Id);
-        _ = new SkeletalMeshRendererComponent(player, _playerModel);
+        _ = new SkeletalMeshRendererComponent(player, _playerModel, _scene);
         _ = new ReplicatedPathComponent(player);
         var health = player.GetComponent<HealthComponent>()!;
         _ = new HealthBarVisualComponent(
